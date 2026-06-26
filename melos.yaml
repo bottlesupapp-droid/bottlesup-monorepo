@@ -1,0 +1,32 @@
+name: bottlesup
+repository: https://github.com/YOUR_ORG/bottlesup-monorepo
+
+packages:
+  - apps/bottles-up-user
+  - apps/bottles-up-vendor
+  - packages/**
+
+command:
+  bootstrap:
+    usePubspecOverrides: true
+
+scripts:
+  get:all:
+    run: melos exec -- flutter pub get
+    description: Run pub get for all Flutter packages
+
+  analyze:all:
+    run: melos exec -- flutter analyze
+    description: Analyze all Flutter packages
+
+  test:all:
+    run: melos exec -- flutter test
+    description: Run tests across all Flutter packages
+
+  build:runner:
+    run: melos exec -- dart run build_runner build --delete-conflicting-outputs
+    description: Run build_runner for code generation in all packages
+
+  clean:all:
+    run: melos exec -- flutter clean
+    description: Clean all Flutter packages
