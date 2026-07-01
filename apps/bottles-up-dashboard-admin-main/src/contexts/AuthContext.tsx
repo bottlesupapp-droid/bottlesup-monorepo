@@ -1,7 +1,6 @@
 import React, { createContext, useEffect, useState } from 'react'
 import { User, Session, AuthError } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
-import { queryClient } from '../lib/queryClient'
 
 interface AuthContextType {
   user: User | null
@@ -82,9 +81,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        // SIGNED_OUT is the terminal event — clear state and cached queries.
+        // SIGNED_OUT is the terminal event — just clear state.
         if (event === 'SIGNED_OUT' || !session) {
-          queryClient.clear()
           setSession(null)
           setUser(null)
           setIsAdmin(false)
@@ -135,7 +133,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const signOut = async () => {
     const { error } = await supabase.auth.signOut()
-    queryClient.clear()
     return { error }
   }
 

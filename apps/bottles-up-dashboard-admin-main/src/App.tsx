@@ -1,5 +1,4 @@
-import { QueryClientProvider } from "@tanstack/react-query";
-import { queryClient } from "@/lib/queryClient";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -11,9 +10,10 @@ import Vendors from "./pages/Vendors";
 import Clubs from "./pages/Clubs";
 import Bookings from "./pages/Bookings";
 import Bottles from "./pages/Bottles";
-import AuditLog from "./pages/AuditLog";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
+
+const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -32,7 +32,6 @@ const App = () => (
           <Route path="/clubs" element={<ProtectedRoute requireAdmin={true}><Clubs /></ProtectedRoute>} />
           <Route path="/bookings" element={<ProtectedRoute requireAdmin={true}><Bookings /></ProtectedRoute>} />
           <Route path="/bottles" element={<ProtectedRoute requireAdmin={true}><Bottles /></ProtectedRoute>} />
-          <Route path="/audit-log" element={<ProtectedRoute requireAdmin={true}><AuditLog /></ProtectedRoute>} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>

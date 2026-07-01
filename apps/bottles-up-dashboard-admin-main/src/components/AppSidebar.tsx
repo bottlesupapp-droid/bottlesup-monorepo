@@ -8,7 +8,6 @@ import {
   Building2,
   BookOpen,
   Wine,
-  ScrollText,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import {
@@ -33,7 +32,6 @@ const menuItems = [
   { title: "Bookings", url: "/bookings", icon: BookOpen },
   { title: "Bottles", url: "/bottles", icon: Wine },
   { title: "Inventory", url: "/inventory", icon: Package },
-  { title: "Audit Log", url: "/audit-log", icon: ScrollText },
 ];
 
 export function AppSidebar() {

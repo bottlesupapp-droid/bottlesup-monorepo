@@ -1,8 +1,5 @@
 import { useState } from 'react'
-import { BookOpen, Building2, CalendarDays, DollarSign, RefreshCw, Flag, CheckCircle } from 'lucide-react'
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select'
+import { BookOpen, Building2, CalendarDays, DollarSign, RefreshCw, Flag } from 'lucide-react'
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import { AppSidebar } from '@/components/AppSidebar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -58,25 +55,15 @@ const canFlag = (paymentStatus: string | null) =>
 const Bookings = () => {
   const { data: clubBookings, loading: clubLoading, error: clubError, refetch: refetchClub } = useClubsBookings()
   const { data: eventBookings, loading: eventLoading, error: eventError, refetch: refetchEvent } = useEventsBookings()
-  const { processRefund, flagRefund, updateBookingStatus, loading: acting, error: actionError } = useAdminActions()
+  const { processRefund, flagRefund, loading: acting, error: actionError } = useAdminActions()
   const { toast } = useToast()
   const [pending, setPending] = useState<RefundAction | null>(null)
-
-  const handleStatusChange = async (bookingId: string, bookingType: 'club' | 'event', oldStatus: string | null, newStatus: string) => {
-    const ok = await updateBookingStatus(bookingId, bookingType, newStatus, oldStatus)
-    if (ok) {
-      toast({ title: 'Status updated', description: `Booking marked as ${newStatus}.` })
-      if (bookingType === 'club') refetchClub(); else refetchEvent()
-    } else {
-      toast({ variant: 'destructive', title: 'Update failed', description: actionError ?? 'Unknown error' })
-    }
-  }
 
   const loading = clubLoading || eventLoading
   const error = clubError || eventError
 
   const totalRevenue =
-    clubBookings.reduce((s, b) => s + (b.total_price ?? 0), 0) +
+    clubBookings.reduce((s, b) => s + (b.total_amount ?? 0), 0) +
     eventBookings.reduce((s, b) => s + (b.total_amount ?? 0), 0)
 
   const confirmedCount =
@@ -92,10 +79,7 @@ const Bookings = () => {
     if (type === 'process') {
       ok = await processRefund(booking.id, bookingType)
     } else {
-      const amount = bookingType === 'club'
-        ? (booking as ClubsBooking).total_price
-        : (booking as EventsBooking).total_amount
-      ok = await flagRefund(booking.id, bookingType, amount)
+      ok = await flagRefund(booking.id, bookingType, booking.total_amount)
     }
 
     setPending(null)
@@ -124,22 +108,8 @@ const Bookings = () => {
   }
 
   const ClubActions = ({ b }: { b: ClubsBooking }) => (
-    <div className="flex items-center gap-1 flex-wrap">
-      <Select
-        defaultValue={b.status ?? 'pending'}
-        onValueChange={(val) => handleStatusChange(b.id, 'club', b.status, val)}
-      >
-        <SelectTrigger className="h-7 w-28 text-xs">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="pending">Pending</SelectItem>
-          <SelectItem value="confirmed">Confirmed</SelectItem>
-          <SelectItem value="completed">Completed</SelectItem>
-          <SelectItem value="cancelled">Cancelled</SelectItem>
-        </SelectContent>
-      </Select>
-      {(b.status === 'confirmed' || b.status === 'completed') && (
+    <div className="flex items-center gap-1">
+      {canRefund(b.payment_status) && (
         <Button
           size="sm"
           variant="outline"
@@ -150,7 +120,7 @@ const Bookings = () => {
           Refund
         </Button>
       )}
-      {b.status === 'confirmed' && (
+      {canFlag(b.payment_status) && (
         <Button
           size="sm"
           variant="outline"
@@ -165,21 +135,7 @@ const Bookings = () => {
   )
 
   const EventActions = ({ b }: { b: EventsBooking }) => (
-    <div className="flex items-center gap-1 flex-wrap">
-      <Select
-        defaultValue={b.status ?? 'pending'}
-        onValueChange={(val) => handleStatusChange(b.id, 'event', b.status, val)}
-      >
-        <SelectTrigger className="h-7 w-28 text-xs">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="pending">Pending</SelectItem>
-          <SelectItem value="confirmed">Confirmed</SelectItem>
-          <SelectItem value="completed">Completed</SelectItem>
-          <SelectItem value="cancelled">Cancelled</SelectItem>
-        </SelectContent>
-      </Select>
+    <div className="flex items-center gap-1">
       {canRefund(b.payment_status) && (
         <Button
           size="sm"
@@ -315,9 +271,9 @@ const Bookings = () => {
                             </TableCell>
                             <TableCell className="text-sm text-foreground">{formatDate(b.booking_date)}</TableCell>
                             <TableCell className="text-sm text-foreground">{b.guest_count ?? '—'}</TableCell>
-                            <TableCell className="text-sm text-foreground">{b.time_slot || 'Table'}</TableCell>
-                            <TableCell className="text-sm text-foreground">{formatCurrency(b.total_price)}</TableCell>
-                            <TableCell className="text-sm text-muted-foreground">—</TableCell>
+                            <TableCell className="text-sm text-foreground capitalize">{b.booking_type || '—'}</TableCell>
+                            <TableCell className="text-sm text-foreground">{formatCurrency(b.total_amount)}</TableCell>
+                            <TableCell><StatusBadge status={b.payment_status} /></TableCell>
                             <TableCell><StatusBadge status={b.status} /></TableCell>
                             <TableCell><ClubActions b={b} /></TableCell>
                           </TableRow>
@@ -398,7 +354,7 @@ const Bookings = () => {
           title={pending.type === 'process' ? 'Process Refund?' : 'Flag for Refund Review?'}
           description={
             pending.type === 'process'
-              ? `Refund ${formatCurrency(pending.bookingType === 'club' ? (pending.booking as ClubsBooking).total_price : (pending.booking as EventsBooking).total_amount)} to ${pending.booking.contact_email || 'customer'} via Stripe? This cannot be undone.`
+              ? `Refund ${formatCurrency(pending.booking.total_amount)} to ${pending.booking.contact_email || 'customer'} via Stripe? This cannot be undone.`
               : `Flag booking ${pending.booking.confirmation_code || pending.booking.id.slice(0, 8)} for manual refund review? No money will be returned yet.`
           }
           confirmLabel={pending.type === 'process' ? 'Process Refund' : 'Flag for Review'}

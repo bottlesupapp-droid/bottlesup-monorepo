@@ -7,12 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { useProfiles } from '@/hooks/useSupabase'
-import { useAdminActions } from '@/hooks/useAdminActions'
-import { useToast } from '@/hooks/use-toast'
 import { UserBookingsDialog } from '@/components/UserBookingsDialog'
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
@@ -20,22 +15,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import type { Profile } from '@/types/supabase'
 
 const Users = () => {
-  const { data: profiles, loading, error, refetch } = useProfiles()
-  const { updateUserRole, toggleUserVerified } = useAdminActions()
-  const { toast } = useToast()
+  const { data: profiles, loading, error } = useProfiles()
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null)
-
-  const handleRoleChange = async (userId: string, oldRole: string | null, newRole: string) => {
-    const ok = await updateUserRole(userId, newRole, oldRole)
-    if (ok) { toast({ title: 'Role updated' }); refetch() }
-    else toast({ variant: 'destructive', title: 'Failed to update role' })
-  }
-
-  const handleVerifyToggle = async (userId: string, current: boolean) => {
-    const ok = await toggleUserVerified(userId, !current)
-    if (ok) { toast({ title: !current ? 'User verified' : 'User unverified' }); refetch() }
-    else toast({ variant: 'destructive', title: 'Failed to update verification' })
-  }
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return '—'
@@ -201,28 +182,14 @@ const Users = () => {
                         <TableCell className="text-sm text-foreground">{profile.phone_number || '—'}</TableCell>
                         <TableCell className="text-sm text-foreground">{profile.age ?? '—'}</TableCell>
                         <TableCell>
-                          <Select
-                            defaultValue={profile.role ?? 'user'}
-                            onValueChange={(val) => handleRoleChange(profile.id, profile.role, val)}
-                          >
-                            <SelectTrigger className="h-7 w-24 text-xs">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="user">User</SelectItem>
-                              <SelectItem value="admin">Admin</SelectItem>
-                              <SelectItem value="staff">Staff</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <Badge variant={profile.is_admin || profile.role === 'admin' ? 'default' : 'secondary'}>
+                            {profile.role || 'user'}
+                          </Badge>
                         </TableCell>
                         <TableCell>
-                          <Button
-                            size="sm"
-                            variant={profile.verified ? 'default' : 'outline'}
-                            onClick={() => handleVerifyToggle(profile.id, profile.verified ?? false)}
-                          >
-                            {profile.verified ? 'Verified ✓' : 'Verify'}
-                          </Button>
+                          <Badge variant={profile.verified ? 'default' : 'outline'}>
+                            {profile.verified ? 'Verified' : 'Unverified'}
+                          </Badge>
                         </TableCell>
                         <TableCell className="text-sm text-foreground">{formatDate(profile.created_at)}</TableCell>
                         <TableCell>

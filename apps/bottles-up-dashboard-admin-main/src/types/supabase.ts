@@ -156,22 +156,24 @@ export interface EventsBooking {
   updated_at: string | null
 }
 
-// Matches the `table_bookings` table written by the user app
 export interface ClubsBooking {
   id: string
   user_id: string | null
-  table_id: string | null
-  guest_count: number | null
+  club_id: string | null
+  zone_id: string | null
   booking_date: string | null
-  time_slot: string | null
-  start_time: string | null
-  end_time: string | null
-  total_price: number | null
+  visit_time: string | null
+  guest_count: number | null
+  total_amount: number | null
+  booking_type: string | null
+  status: string | null
   special_requests: string | null
   contact_phone: string | null
   contact_email: string | null
   confirmation_code: string | null
-  status: string | null
+  payment_status: string | null
+  payment_method: string | null
+  notes: string | null
   created_at: string | null
   updated_at: string | null
 }

@@ -61,7 +61,7 @@ export function useEventsBookings() {
 }
 
 export function useClubsBookings() {
-  return useSupabaseData<ClubsBooking>('table_bookings')
+  return useSupabaseData<ClubsBooking>('clubs_bookings')
 }
 
 export function useReviews() {
@@ -87,8 +87,8 @@ export function useDashboardStats() {
   const { count: totalEventBookings, loading: eventBookingsLoading } = useEventsBookings()
 
   const confirmedRevenue = clubBookings
-    .filter(b => b.status === 'confirmed' || b.status === 'completed')
-    .reduce((sum, b) => sum + (b.total_price ?? 0), 0)
+    .filter(b => b.payment_status === 'paid')
+    .reduce((sum, b) => sum + (b.total_amount ?? 0), 0)
 
   const loading = usersLoading || vendorsLoading || clubsLoading || eventsLoading ||
     inventoryLoading || bottlesLoading || clubBookingsLoading || eventBookingsLoading
@@ -228,7 +228,7 @@ export function useUserBookings(userId: string | null) {
     setError(null)
     try {
       const [clubRes, eventRes] = await Promise.all([
-        supabase.from('table_bookings').select('*').eq('user_id', uid).order('created_at', { ascending: false }),
+        supabase.from('clubs_bookings').select('*').eq('user_id', uid).order('booking_date', { ascending: false }),
         supabase.from('events_bookings').select('*').eq('user_id', uid).order('booking_date', { ascending: false }),
       ])
       if (clubRes.error) throw clubRes.error

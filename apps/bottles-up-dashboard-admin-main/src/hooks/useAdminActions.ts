@@ -110,64 +110,6 @@ export function useAdminActions() {
       })
     })
 
-  // ── User / profile actions ────────────────────────────────────────────────
-
-  const updateUserRole = (userId: string, newRole: string, oldRole: string | null) =>
-    wrap(async () => {
-      const { error: dbError } = await supabase
-        .from('profiles')
-        .update({ role: newRole, updated_at: new Date().toISOString() })
-        .eq('id', userId)
-      if (dbError) throw new Error(dbError.message)
-      await logAction({
-        action: 'update_user_role',
-        targetTable: 'profiles',
-        targetId: userId,
-        before: { role: oldRole },
-        after: { role: newRole },
-      })
-    })
-
-  const toggleUserVerified = (userId: string, verified: boolean) =>
-    wrap(async () => {
-      const { error: dbError } = await supabase
-        .from('profiles')
-        .update({ verified, updated_at: new Date().toISOString() })
-        .eq('id', userId)
-      if (dbError) throw new Error(dbError.message)
-      await logAction({
-        action: verified ? 'verify_user' : 'unverify_user',
-        targetTable: 'profiles',
-        targetId: userId,
-        before: { verified: !verified },
-        after: { verified },
-      })
-    })
-
-  // ── Booking status actions ────────────────────────────────────────────────
-
-  const updateBookingStatus = (
-    bookingId: string,
-    bookingType: 'club' | 'event',
-    newStatus: string,
-    oldStatus: string | null,
-  ) =>
-    wrap(async () => {
-      const table = bookingType === 'club' ? 'table_bookings' : 'events_bookings'
-      const { error: dbError } = await supabase
-        .from(table)
-        .update({ status: newStatus })
-        .eq('id', bookingId)
-      if (dbError) throw new Error(dbError.message)
-      await logAction({
-        action: 'update_booking_status',
-        targetTable: table,
-        targetId: bookingId,
-        before: { status: oldStatus },
-        after: { status: newStatus },
-      })
-    })
-
   // ── Booking / refund actions ──────────────────────────────────────────────
 
   const flagRefund = (
@@ -176,13 +118,10 @@ export function useAdminActions() {
     amount: number | null,
   ) =>
     wrap(async () => {
-      const table = bookingType === 'club' ? 'table_bookings' : 'events_bookings'
-      const updateData = bookingType === 'club'
-        ? { status: 'flagged', updated_at: new Date().toISOString() }
-        : { payment_status: 'flagged', updated_at: new Date().toISOString() }
+      const table = bookingType === 'club' ? 'clubs_bookings' : 'events_bookings'
       const { error: dbError } = await supabase
         .from(table)
-        .update(updateData)
+        .update({ payment_status: 'flagged', updated_at: new Date().toISOString() })
         .eq('id', bookingId)
       if (dbError) throw new Error(dbError.message)
       await logAction({
@@ -219,18 +158,11 @@ export function useAdminActions() {
   return {
     loading,
     error,
-    // vendor
     approveVendor,
     suspendVendor,
-    // event
     unpublishEvent,
     removeEvent,
-    // booking
-    updateBookingStatus,
     flagRefund,
     processRefund,
-    // user
-    updateUserRole,
-    toggleUserVerified,
   }
 }
