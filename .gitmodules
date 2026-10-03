@@ -1,0 +1,3 @@
+[submodule "apps/bottles-up-website-main"]
+	path = apps/bottles-up-website-main
+	url = https://github.com/KDR9MGR/bottles-up-website.git
