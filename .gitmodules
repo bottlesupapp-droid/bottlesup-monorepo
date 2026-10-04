@@ -1,3 +1,11 @@
 [submodule "apps/bottles-up-website-main"]
 	path = apps/bottles-up-website-main
 	url = https://github.com/KDR9MGR/bottles-up-website.git
+[submodule "apps/bottles-up-user"]
+	path = apps/bottles-up-user
+	url = https://github.com/KDR9MGR/bottles-up-user.git
+	branch = main
+[submodule "apps/bottles-up-vendor"]
+	path = apps/bottles-up-vendor
+	url = https://github.com/KDR9MGR/bottles-up-vendor.git
+	branch = main
