@@ -5,6 +5,8 @@ rely on with git (branch heads, whether a PR merged) because it can be stale. **
 stale lines, do not append history, keep it readable in a few minutes, commit it on the monorepo branch `chore/audit-and-staging` and push that
 branch (never push `main`). No secrets in this file.
 
+> **Other Claude sessions push to this repo too** (same git user). `git fetch` before you push, and read `git log origin/<branch>` for work you did not do. Never force-push.
+
 ## The project in one paragraph
 
 BottlesUp: a nightlife booking platform. One Supabase project (`hwmynlghrmtoufyrcihp`) is **production** and is shared by three apps. The client
@@ -23,7 +25,7 @@ decision taken: **the website's `site_*` schema and functions are the source of 
 
 - **Production is off limits to me.** The harness blocks reading the production database (even with the user logged in to the Supabase CLI) and blocks
   `gh pr merge`. Do not look for a way around either; ask the user to do it, or to add a permission rule. The user merged website PR #1 themselves.
-- **There is no staging.** Never apply a migration "to staging" by running it against `hwmynlghrmtoufyrcihp`. The runbook is `supabase/staging/README.md`
+- **There is no staging.** (The go-live runbook goes straight to production, with the user running every step.) Never apply a migration "to staging" by running it against `hwmynlghrmtoufyrcihp`. The runbook is `supabase/staging/README.md`
   (never run). The org has only two Supabase projects (production and an unrelated `habitpro`); a third may need a paid plan (unconfirmed).
 - Push **branches only**, never `main`, never force. Merges to `main` are the user's click (or an explicit rule they add).
 - Commit messages end with `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`; PR bodies end with `🤖 Generated with [Claude Code](https://claude.com/claude-code)`.
@@ -42,16 +44,16 @@ decision taken: **the website's `site_*` schema and functions are the source of 
 - `main` = `b765da8` (PR #1, merged by the user 2026-10-07) contains everything: CI, tenancy, account onboarding, team invitations, scoped door scanner,
   venue setup, booking link, owner bookings, and the two guarded scanner fixes. Production deploys only on `main`; the new screens are **off** behind
   `VITE_ENABLE_ACCOUNT_ONBOARDING` (unset). Only other branch: `claude/blissful-elbakyan-e0a880` (not mine: header/gallery/date-field fixes, 1 unmerged commit, 63 behind).
-- **No migration is applied anywhere.** Nothing auto-applies on merge (no Supabase branching, no deploy workflow). Apply by hand, filename order:
-  `20260830120000_fix_checkin_ticket_early_returns`, `20260830130000_fix_verify_ticket_otp_expiry` (both guarded: replace only the exact old function,
-  no-op if fixed, STOP if different), `20261006120000_tenancy_foundation`, `20261007100000_accounts_onboarding`, `20261008100000_team_invitations`,
-  `20261009100000_door_scanner`, `20261010100000_venue_setup`, `20261011100000_venue_bookings`. Also deploy edge function `send-team-invitation`
-  (needs `RESEND_API_KEY`, `TICKETS_FROM_EMAIL`, optional `SITE_URL`) and add `https://www.bottlesupapp.com/home` to Supabase Auth redirect URLs; flag last.
-  Full rollout text: `apps/bottles-up-website-main/ACCOUNT_ONBOARDING.md`.
-- **Before applying anything, the user runs `supabase/audit/03_preflight_website_migrations.sql`** (monorepo, read-only single SELECT: collisions,
-  prerequisites, the live state of `checkin_ticket`/`verify_ticket_otp`: OLD / ALREADY FIXED / DIFFERENT) in the production SQL editor and sends the result; also
-  `supabase/audit/01_live_db_audit.sql`, `02_money_users_overlap.sql`, and (website repo `supabase/audit/`) `checkin_fallthrough.sql`, `verify_otp_after_event.sql`
-  to see what the old scanner bug already did. None has been run. Whether the live site has issues, and whether the scanner bug is live, is **unknown**.
+- **Go-live runbook (written by another session on 2026-10-07, branch `chore/audit-and-staging`): `supabase/go-live/README.md`. Follow it, not older notes.** It records that the
+  user's production preflight (7 Oct) found no collisions and nothing missing; production is Postgres 17.4. Two findings: production's `checkin_ticket()` was rewritten and has
+  **no** fall-through bug, so `20260830120000_fix_checkin_ticket_early_returns.sql` must **NOT be applied**; production's `verify_ticket_otp()` is the old one, so
+  `20260830130000_fix_verify_ticket_otp_expiry.sql` **does** apply. Apply 7 files by hand in the SQL editor, in this order: `20260830130000`, `20261006120000`, `20261007100000`,
+  `20261008100000`, `20261009100000`, `20261010100000`, `20261011100000`. **Do not use `supabase db push`.** Then run the read-only `supabase/audit/04_postflight_website_migrations.sql`
+  (first row must say OK), deploy `send-team-invitation` (`--use-api`), add `https://www.bottlesupapp.com/home` to Auth redirect URLs, set `VITE_ENABLE_ACCOUNT_ONBOARDING=true` on the
+  Vercel project that serves bottlesupapp.com (two projects deploy this repo: `bottles-up-website`, `bottles-up-website1`) and redeploy, then smoke-test. Rollback for the entry-code fix:
+  `supabase/go-live/rollback_verify_ticket_otp_fix.sql`; the feature is switched off by unsetting the flag.
+- **Whether the user has executed the runbook is UNKNOWN to me.** Nothing auto-applies on merge. Do not assume either way: ask the user, or have them run the postflight and send the result.
+  The runbook goes straight to production (no staging project exists). The older preflight/audit scripts (`01`, `02`, `03` in `supabase/audit/`) are still there; `03` is the preflight that produced the findings above.
 - Checks on `main`: 801 database assertions (+ concurrency and two migration-guard scripts), 753 unit tests, build, type check at its 127-error baseline
   (`tsc-baseline.json`), lint within 8 warnings. GitHub CI runs the same (Postgres 17).
 - Owner screens built: Overview, My Venues (profile + editors for floor plans, tables, bottle menu, booking times), Tables & Bookings (read-only, a manager's Floor too),
@@ -101,7 +103,7 @@ they are checked out on feature branches; do not commit those pointers until the
 
 ## Waiting on the user
 
-1. Run the preflight and audits in production and send the output. 2. Decide on a staging project. 3. Merge the vendor PRs in order (open them first) and the monorepo branch if wanted.
+1. Execute (or confirm you have executed) `supabase/go-live/README.md`, then run the postflight and send the result. 2. Decide whether a staging project is still wanted. 3. Merge the vendor PRs in order (open them first) and the monorepo branch if wanted.
 4. User-app bundle ID. 5. Android keystore, Apple signing, privacy-policy text. 6. Apply migrations (staging first once it exists), deploy `send-team-invitation`, set the flag.
 
 ## Next steps for Claude, in order
@@ -122,6 +124,7 @@ they are checked out on feature branches; do not commit those pointers until the
 
 ## Session log (newest first)
 
+- 2026-10-09 (later): merged the other session's go-live commit `b4ea58d` into this branch; corrected this file (check-in fix must not be applied; verify-code fix does).
 - 2026-10-09: vendor app moved onto website functions: door scanner, manager Floor, owner Home/Venues (branches above); user/vendor readiness assessed; HANDOFF.md created.
 - 2026-10-07: website branches merged via PR #1 (the user clicked merge); merged branches deleted; monorepo pointer bumped; preflight SQL written; production read and `gh pr merge` blocked by the harness.
 - 2026-10-06/07: website onboarding, workspaces, team, door scanner, venue setup, booking link, owner bookings built and tested; scanner fixes written; tracker doc created.
