@@ -61,6 +61,22 @@ decision taken: **the website's `site_*` schema and functions are the source of 
 - **Blocked until `supabase db pull`:** bottle orders, money actually collected, cancellations, anything server/table-service (production has columns/functions no
   committed migration defines: `profiles`, `promo_codes`, 17 of 24 RPCs, per-line bottle service/payment state, `table_view`/`privacy_level`/`seating_type`/`amenities`/`policy_note`).
 
+## DETOUR (2026-10-10): client-reported website problems (vendor-app work paused)
+
+The client reported two things (a screen recording of the onboarding page was attached; frames were extracted and read):
+1. **"Eonics Lounge was a mistake but I can't exit the onboarding screen and cancel it."** Cause: Back pointed at `/home`, and `decideLanding`
+   sends a person with exactly one unfinished business straight back to its onboarding page (a loop); no function let a person delete a business.
+   **Fixed on website branch `fix/leave-onboarding-and-cancel-business` `0ceed72` (pushed, no PR yet):** Back goes to `/workspaces`; new
+   `cancel_business(p_org)` migration `20261012100000_cancel_business.sql` (owner/organizer, only before verification, refuses team members / live venue /
+   published event / bookings or orders, audit-logged) + a "Cancel this business" section with confirmation. **The migration is NOT applied anywhere**: apply it in the
+   SQL editor (needs only tenancy + onboarding) before the button works. Tests: DB 849 assertions, unit 805, typecheck/lint/build clean.
+2. **"Event organizer page needs a create event."** The organizer's My Events is a "coming soon" placeholder and `site_events` is writable only by CMS admins.
+   IN PROGRESS on branch `feat/organizer-create-event` (off `main`): list / create / edit / delete draft events for the organizer's own business via new
+   functions; publishing and ticket tiers stay with the BottlesUp team for now (open decision for the client: may a verified organizer publish itself?).
+- The client is already using the onboarding pages, so the go-live runbook (or enough of it) must have been run and the flag turned on somewhere; not confirmed with the user.
+- Both new migrations are additive and independent of the venue-setup helpers (they depend only on tenancy + onboarding + audit_log + site_events). Add them to the runbook
+  (`supabase/go-live/README.md`) and the pre/post-flight lists when the branches merge.
+
 ## Vendor app (`bottles-up-vendor`): six stacked branches, none merged
 
 `main` `1e7cb72` (1 Jul) → `chore/archive-unused-features` `09f3038` → `feat/workspaces` `7ac43fe` → `feat/door-on-website-functions` `9b8dd32` →
