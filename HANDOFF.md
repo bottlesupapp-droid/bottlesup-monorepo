@@ -64,7 +64,7 @@ decision taken: **the website's `site_*` schema and functions are the source of 
 ## DETOUR (2026-10-10): client-reported website problems (vendor-app work paused)
 
 The client reported two things (a screen recording of the onboarding page was attached; frames were extracted and read). Both are fixed on
-**two stacked website branches, pushed, no PRs opened yet, merge in this order**: `fix/leave-onboarding-and-cancel-business` `0ceed72`, then
+**two stacked website branches with PRs open, merge in this order** (PR [#2](https://github.com/KDR9MGR/bottles-up-website/pull/2) first, then [#3](https://github.com/KDR9MGR/bottles-up-website/pull/3), whose base is #2's branch; retarget #3 to `main` after #2 merges if GitHub does not): `fix/leave-onboarding-and-cancel-business` `0ceed72`, then
 `feat/organizer-create-event` `3e5f96c` (which contains the first). Website `main` is still `b765da8`.
 1. **"Eonics Lounge was a mistake but I can't exit the onboarding screen and cancel it."** Cause: Back pointed at `/home`, and `decideLanding`
    sends a person with exactly one unfinished business straight back to its onboarding page (a loop); no function let a person delete a business.
@@ -79,6 +79,7 @@ The client reported two things (a screen recording of the onboarding page was at
 - **Neither migration is applied anywhere.** Apply 8 and 9 in the SQL editor (runbook section 1b in `supabase/go-live/README.md`) and run
   `supabase/audit/05_check_client_feedback_fixes.sql` (read-only; checks prerequisites such as `site_events.organizer_name`, exposure and search_path). Until then the
   new buttons show an error; nothing else changes.
+- **CI status (10 Oct): Vercel previews and "Types, lint, unit tests, build" pass on both PRs; "Migrations replay and database tests" FAILS on both for an infrastructure reason only** (the runner cannot pull `postgres:17`: Docker Hub unauthenticated rate limit; a re-run within seconds failed the same way). The same suite passes locally (957 assertions). Re-run that job later (`gh run rerun <run-id> --failed`, runs 37991169891 and 37991181222), or add a Docker Hub login / mirror to the workflow (a repo change for the user to decide).
 - Checks on the stacked branch: DB suite 957 assertions, unit 890, typecheck/lint(8)/build clean; SQL and TypeScript mutation passes (every real survivor became a test;
   left: a redundant organization-kind check, a defensive double-save guard). Both screens were looked at on a throwaway Vite page (deleted).
 - The client is already using the onboarding pages, so the go-live runbook (or enough of it) must have been run and the flag turned on somewhere; not confirmed with the user.
@@ -133,7 +134,7 @@ they are checked out on feature branches; do not commit those pointers until the
 
 ## Next steps for Claude, in order
 
-0. After the detour: open PRs for the two website branches if the user wants (first one first), fix whatever the user reports from applying migrations 8 and 9, and decide with the client whether verified organizers may publish, plus ticket tiers for organizer events (brief section 7). Then resume the vendor app at item 1 below.
+0. After the detour: get the two website PRs green (re-run the DB job) and merged, fix whatever the user reports from applying migrations 8 and 9, and decide with the client whether verified organizers may publish, plus ticket tiers for organizer events (brief section 7). Then resume the vendor app at item 1 below.
 1. Open PRs for the five vendor branches (stacked; describe the order) if the user wants them; update the tracker doc's "Progress since 6 Oct" tab with the vendor-app work.
 2. Vendor owner editors still missing: venue profile (`update_venue_profile`) and floor plans with image upload (`save_venue_floor`, `remove_venue_floor`; `image_picker` is already a dependency), then photos for tables and bottles (`image_url`). Tables, bottles and times are done (branch `feat/owner-setup-editors`); the rule port is `lib/features/owner/logic/setup_forms.dart`.
 3. Vendor team screens (`list_team`, `invite_member`, `invitable_roles` exist and are tested on the website).
