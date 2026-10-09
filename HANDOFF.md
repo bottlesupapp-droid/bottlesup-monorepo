@@ -61,16 +61,18 @@ decision taken: **the website's `site_*` schema and functions are the source of 
 - **Blocked until `supabase db pull`:** bottle orders, money actually collected, cancellations, anything server/table-service (production has columns/functions no
   committed migration defines: `profiles`, `promo_codes`, 17 of 24 RPCs, per-line bottle service/payment state, `table_view`/`privacy_level`/`seating_type`/`amenities`/`policy_note`).
 
-## Vendor app (`bottles-up-vendor`): five stacked branches, none merged
+## Vendor app (`bottles-up-vendor`): six stacked branches, none merged
 
 `main` `1e7cb72` (1 Jul) → `chore/archive-unused-features` `09f3038` → `feat/workspaces` `7ac43fe` → `feat/door-on-website-functions` `9b8dd32` →
-`feat/manager-floor` `8af0d05` → `feat/owner-venues` `4ab7b3c` (all pushed; no PRs opened yet). Merge in that order.
+`feat/manager-floor` `8af0d05` → `feat/owner-venues` `4ab7b3c` → `feat/owner-setup-editors` `34e1dd1` (all pushed; no PRs opened yet). Merge in that order.
 
 - Built on the website's functions: workspaces (`my_workspaces`, `accept_invitation`), door **Scan + Guests** (door role only), manager **Floor** (bookings by night,
-  `list_venue_bookings`), owner **Home** (tonight across venues) and **Venues** (list, add venue, per-venue Bookings / Setup / Link tabs with QR).
+  `list_venue_bookings`), owner **Home** (tonight across venues) and **Venues** (list, add venue, per-venue Bookings / Setup / Link tabs with QR), and the owner's
+  **setup editors**: tables, bottle menu, booking times (the Setup tab's `tables`/`bottles`/`booking_rules` steps open them; `save_venue_table_type`, `save_venue_bottle`,
+  `add_venue_time_slot` and the `list_/remove_` pairs). Photos and floor plans are NOT editable in the app yet (payloads never send `image_url`, so edits keep photos).
   Rules are Dart ports of the website's rule modules. All screens say "not set up on this server yet" until the website migrations are applied.
 - Still placeholders: server screens (Scan/My Tables/Orders/Requests: prod-only functions), Door Sales, manager Tonight/Orders/Team/More, owner Money/Reports/More, organizer, security, verifier.
-- Checks: 315 tests, 0 analyzer errors/warnings (142 old infos). Run once under a DST zone: `TZ=America/Toronto flutter test`. Look at screens with a throwaway
+- Checks: 415 tests, analyzer 0 errors, 142 infos and 14 old unused-import warnings in unrelated files (none in owner code). Run once under a DST zone: `TZ=America/Toronto flutter test`. Look at screens with a throwaway
   Flutter **web** build served locally and the built-in browser (click `flt-semantics-placeholder` to enable accessibility; delete the demo file and `build/web` after).
 - Release blockers (user actions): Android `key.properties`/keystore (build fails without it on purpose); Apple team `4T453RG45S` has no signing identity and both
   iPhones were offline; register App ID `com.bottlesup.vendor`; real privacy-policy text; crash reporting; no iOS privacy manifest; camera never tested on a phone.
@@ -109,7 +111,7 @@ they are checked out on feature branches; do not commit those pointers until the
 ## Next steps for Claude, in order
 
 1. Open PRs for the five vendor branches (stacked; describe the order) if the user wants them; update the tracker doc's "Progress since 6 Oct" tab with the vendor-app work.
-2. Vendor owner editors on the website's tested functions (`save_venue_floor`, `save_venue_table_type`, `save_venue_bottle`, `add_venue_time_slot`, `update_venue_profile`, and the `remove_*`/`list_*` pairs): large forms; port the website's `venueSetupForms.ts` rules.
+2. Vendor owner editors still missing: venue profile (`update_venue_profile`) and floor plans with image upload (`save_venue_floor`, `remove_venue_floor`; `image_picker` is already a dependency), then photos for tables and bottles (`image_url`). Tables, bottles and times are done (branch `feat/owner-setup-editors`); the rule port is `lib/features/owner/logic/setup_forms.dart`.
 3. Vendor team screens (`list_team`, `invite_member`, `invitable_roles` exist and are tested on the website).
 4. After the user answers the preflight: fix anything it finds (a name collision, a differing live function).
 5. After `supabase db pull`: bottle orders, collected money, server/table-service screens (website and vendor).
@@ -124,6 +126,7 @@ they are checked out on feature branches; do not commit those pointers until the
 
 ## Session log (newest first)
 
+- 2026-10-10: vendor owner setup editors (tables, bottle menu, booking times) built, tested (100 new tests incl. drift guards against the website migration; 125 mutants, all real survivors fixed), looked at on a throwaway web build, pushed as `feat/owner-setup-editors` `34e1dd1`; vendor CLAUDE.md updated.
 - 2026-10-09 (later): merged the other session's go-live commit `b4ea58d` into this branch; corrected this file (check-in fix must not be applied; verify-code fix does).
 - 2026-10-09: vendor app moved onto website functions: door scanner, manager Floor, owner Home/Venues (branches above); user/vendor readiness assessed; HANDOFF.md created.
 - 2026-10-07: website branches merged via PR #1 (the user clicked merge); merged branches deleted; monorepo pointer bumped; preflight SQL written; production read and `gh pr merge` blocked by the harness.
