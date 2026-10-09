@@ -63,19 +63,26 @@ decision taken: **the website's `site_*` schema and functions are the source of 
 
 ## DETOUR (2026-10-10): client-reported website problems (vendor-app work paused)
 
-The client reported two things (a screen recording of the onboarding page was attached; frames were extracted and read):
+The client reported two things (a screen recording of the onboarding page was attached; frames were extracted and read). Both are fixed on
+**two stacked website branches, pushed, no PRs opened yet, merge in this order**: `fix/leave-onboarding-and-cancel-business` `0ceed72`, then
+`feat/organizer-create-event` `3e5f96c` (which contains the first). Website `main` is still `b765da8`.
 1. **"Eonics Lounge was a mistake but I can't exit the onboarding screen and cancel it."** Cause: Back pointed at `/home`, and `decideLanding`
    sends a person with exactly one unfinished business straight back to its onboarding page (a loop); no function let a person delete a business.
-   **Fixed on website branch `fix/leave-onboarding-and-cancel-business` `0ceed72` (pushed, no PR yet):** Back goes to `/workspaces`; new
-   `cancel_business(p_org)` migration `20261012100000_cancel_business.sql` (owner/organizer, only before verification, refuses team members / live venue /
-   published event / bookings or orders, audit-logged) + a "Cancel this business" section with confirmation. **The migration is NOT applied anywhere**: apply it in the
-   SQL editor (needs only tenancy + onboarding) before the button works. Tests: DB 849 assertions, unit 805, typecheck/lint/build clean.
-2. **"Event organizer page needs a create event."** The organizer's My Events is a "coming soon" placeholder and `site_events` is writable only by CMS admins.
-   IN PROGRESS on branch `feat/organizer-create-event` (off `main`): list / create / edit / delete draft events for the organizer's own business via new
-   functions; publishing and ticket tiers stay with the BottlesUp team for now (open decision for the client: may a verified organizer publish itself?).
+   Fix: Back goes to `/workspaces`; new `cancel_business(p_org)` (migration `20261012100000`): the owner/organizer of an UNVERIFIED business (not_submitted or
+   more_information_needed) can delete it with its drafts; refuses under review / verified, other active team members, a live venue or published event, and
+   anything with bookings or orders; audit-logged; "Cancel this business" section with a confirmation; sign-up intent reset to personal after cancelling.
+2. **"Event organizer page needs a create event."** The organizer's Home/Events were "coming soon" and `site_events` is CMS-admin-only. Fix: new
+   `list_org_events` / `save_org_event` / `remove_org_event` (migration `20261013100000`); organizers create DRAFTS only (cannot publish; no status/org_id/slug
+   field), can edit/remove their drafts, published events are out of reach, 200 per business, audit-logged; list + Create event form on the organizer's Home and Events.
+   **Not built (open client decisions):** ticket tiers, linking an event to a venue + agreement, publishing by the organizer. Drafts stay private until the BottlesUp
+   team publishes them in the CMS (which also adds tickets).
+- **Neither migration is applied anywhere.** Apply 8 and 9 in the SQL editor (runbook section 1b in `supabase/go-live/README.md`) and run
+  `supabase/audit/05_check_client_feedback_fixes.sql` (read-only; checks prerequisites such as `site_events.organizer_name`, exposure and search_path). Until then the
+  new buttons show an error; nothing else changes.
+- Checks on the stacked branch: DB suite 957 assertions, unit 890, typecheck/lint(8)/build clean; SQL and TypeScript mutation passes (every real survivor became a test;
+  left: a redundant organization-kind check, a defensive double-save guard). Both screens were looked at on a throwaway Vite page (deleted).
 - The client is already using the onboarding pages, so the go-live runbook (or enough of it) must have been run and the flag turned on somewhere; not confirmed with the user.
-- Both new migrations are additive and independent of the venue-setup helpers (they depend only on tenancy + onboarding + audit_log + site_events). Add them to the runbook
-  (`supabase/go-live/README.md`) and the pre/post-flight lists when the branches merge.
+- Tell the client: events they create are private drafts until BottlesUp publishes them.
 
 ## Vendor app (`bottles-up-vendor`): six stacked branches, none merged
 
@@ -126,6 +133,7 @@ they are checked out on feature branches; do not commit those pointers until the
 
 ## Next steps for Claude, in order
 
+0. After the detour: open PRs for the two website branches if the user wants (first one first), fix whatever the user reports from applying migrations 8 and 9, and decide with the client whether verified organizers may publish, plus ticket tiers for organizer events (brief section 7). Then resume the vendor app at item 1 below.
 1. Open PRs for the five vendor branches (stacked; describe the order) if the user wants them; update the tracker doc's "Progress since 6 Oct" tab with the vendor-app work.
 2. Vendor owner editors still missing: venue profile (`update_venue_profile`) and floor plans with image upload (`save_venue_floor`, `remove_venue_floor`; `image_picker` is already a dependency), then photos for tables and bottles (`image_url`). Tables, bottles and times are done (branch `feat/owner-setup-editors`); the rule port is `lib/features/owner/logic/setup_forms.dart`.
 3. Vendor team screens (`list_team`, `invite_member`, `invitable_roles` exist and are tested on the website).
@@ -142,6 +150,7 @@ they are checked out on feature branches; do not commit those pointers until the
 
 ## Session log (newest first)
 
+- 2026-10-10 (detour): client reported two website problems; fixed on `fix/leave-onboarding-and-cancel-business` and `feat/organizer-create-event` (see the DETOUR section); runbook 1b and `supabase/audit/05_check_client_feedback_fixes.sql` added.
 - 2026-10-10: vendor owner setup editors (tables, bottle menu, booking times) built, tested (100 new tests incl. drift guards against the website migration; 125 mutants, all real survivors fixed), looked at on a throwaway web build, pushed as `feat/owner-setup-editors` `34e1dd1`; vendor CLAUDE.md updated.
 - 2026-10-09 (later): merged the other session's go-live commit `b4ea58d` into this branch; corrected this file (check-in fix must not be applied; verify-code fix does).
 - 2026-10-09: vendor app moved onto website functions: door scanner, manager Floor, owner Home/Venues (branches above); user/vendor readiness assessed; HANDOFF.md created.

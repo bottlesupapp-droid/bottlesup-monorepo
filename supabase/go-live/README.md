@@ -32,6 +32,20 @@ On a Mac, `pbcopy < <file>` copies a file without opening it. The files are in
 6. `20261010100000_venue_setup.sql`
 7. `20261011100000_venue_bookings.sql`
 
+### 1b. Two follow-up migrations (client feedback of 10 Oct), once their website branches are merged to `main`
+
+The client found two problems on the live onboarding pages: a business added by mistake could not be left or cancelled, and the
+organizer's Events page had no way to create an event. The fixes are two more migrations. They are on the website branches
+`fix/leave-onboarding-and-cancel-business` and `feat/organizer-create-event` (stacked: merge the first, then the second), and they only
+work after the seven above. **Until they are applied, the "Cancel this business" button and the organizer's "Create event" button show an
+error** (the rest of the site is unaffected). Apply them the same way, in this order:
+
+8. `20261012100000_cancel_business.sql` (one new function: cancel a business that has not been verified)
+9. `20261013100000_organizer_events.sql` (the organizer's own draft events: three new functions and helpers; it needs `site_events.organizer_name`)
+
+Then run `supabase/audit/05_check_client_feedback_fixes.sql` (read only; it can also be run before, to check the prerequisites). The first
+row must say `OK`.
+
 If one fails, **stop and send me the error text**. A failed run should leave nothing half-applied (each file stops at its first problem
 and a multi-statement run is normally all-or-nothing), but do not run later files until it is understood.
 
