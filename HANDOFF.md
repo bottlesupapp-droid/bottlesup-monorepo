@@ -79,7 +79,7 @@ The client reported two things (a screen recording of the onboarding page was at
 - **Neither migration is applied anywhere.** Apply 8 and 9 in the SQL editor (runbook section 1b in `supabase/go-live/README.md`) and run
   `supabase/audit/05_check_client_feedback_fixes.sql` (read-only; checks prerequisites such as `site_events.organizer_name`, exposure and search_path). Until then the
   new buttons show an error; nothing else changes.
-- **CI status (10 Oct): Vercel previews and "Types, lint, unit tests, build" pass on both PRs; "Migrations replay and database tests" FAILS on both for an infrastructure reason only** (the runner cannot pull `postgres:17`: Docker Hub unauthenticated rate limit; a re-run within seconds failed the same way). The same suite passes locally (957 assertions). Re-run that job later (`gh run rerun <run-id> --failed`, runs 37991169891 and 37991181222), or add a Docker Hub login / mirror to the workflow (a repo change for the user to decide).
+- **CI status (13 Oct): GREEN on both PRs** (#2 and #3: all 5 checks each, mergeable, state CLEAN). "Migrations replay and database tests" first failed only on a Docker Hub rate limit (the runner could not pull `postgres:17`); the re-run on 13 Oct passed, so both migrations (`20261012100000`, `20261013100000`) now have a passing run on Postgres 17, which is production's major version (production is 17.4; local runs used 15). Nothing is merged or applied yet.
 - Checks on the stacked branch: DB suite 957 assertions, unit 890, typecheck/lint(8)/build clean; SQL and TypeScript mutation passes (every real survivor became a test;
   left: a redundant organization-kind check, a defensive double-save guard). Both screens were looked at on a throwaway Vite page (deleted).
 - The client is already using the onboarding pages, so the go-live runbook (or enough of it) must have been run and the flag turned on somewhere; not confirmed with the user.
@@ -138,7 +138,7 @@ they are checked out on feature branches; do not commit those pointers until the
 
 ## Next steps for Claude, in order
 
-0. After the detour: get the two website PRs green (re-run the DB job) and merged, fix whatever the user reports from applying migrations 8 and 9, and decide with the client whether verified organizers may publish, plus ticket tiers for organizer events (brief section 7). Then resume the vendor app at item 1 below.
+0. After the detour: the two website PRs are green; merge #2 then #3 (user), apply migrations 8 and 9 (user), fix whatever the user reports from applying migrations 8 and 9, and decide with the client whether verified organizers may publish, plus ticket tiers for organizer events (brief section 7). Then resume the vendor app at item 1 below.
 1. Open PRs for the five vendor branches (stacked; describe the order) if the user wants them; update the tracker doc's "Progress since 6 Oct" tab with the vendor-app work.
 2. Vendor owner editors still missing: venue profile (`update_venue_profile`) and floor plans with image upload (`save_venue_floor`, `remove_venue_floor`; `image_picker` is already a dependency), then photos for tables and bottles (`image_url`). Tables, bottles and times are done (branch `feat/owner-setup-editors`); the rule port is `lib/features/owner/logic/setup_forms.dart`.
 3. (done: owner/manager Team tab on `feat/owner-team`; organizer Home/Events on `feat/organizer-events`.) Next vendor options: venue profile + floor plans + photos with image upload (item 2; also unlocks event cover photos), shift creation, door staff for an organizer's events, the organizer's ticket tiers once the client decides (brief section 7).
@@ -155,6 +155,7 @@ they are checked out on feature branches; do not commit those pointers until the
 
 ## Session log (newest first)
 
+- 2026-10-13: website CI re-run: both PRs (#2, #3) are green, including the database job on Postgres 17. Still to do (user): merge #2 then #3, apply migrations 8 and 9, run `supabase/audit/05_check_client_feedback_fixes.sql`, redeploy.
 - 2026-10-10 (latest): organizer **Home/Events** screens built, tested (69 new tests; 69 mutants, real survivors fixed) and pushed as `feat/organizer-events` `d85d03f`; vendor CLAUDE.md updated.
 - 2026-10-10 (later): back on the vendor app: owner/manager **Team** tab built, tested (89 new tests; 92 mutants, real survivors fixed) and pushed as `feat/owner-team` `bc6c5ad`; vendor CLAUDE.md updated.
 - 2026-10-10 (detour): client reported two website problems; fixed on `fix/leave-onboarding-and-cancel-business` and `feat/organizer-create-event` (see the DETOUR section); runbook 1b and `supabase/audit/05_check_client_feedback_fixes.sql` added.
