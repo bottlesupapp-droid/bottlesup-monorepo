@@ -205,6 +205,12 @@ Legend: **You** = needs the user (access, accounts, decisions); **Me** = Claude 
 
 **Critical path to a first release:** 1-5 (client fixes live), then 6, 8, 10-16, 18-20. Phase 6 runs alongside and decides how soon the full product exists.
 
+## Phase 6 step 23 in progress (14 Oct): server dashboard
+
+- **Blocked part:** the website's server screens (`list_my_tables`, bottle orders, payment evidence) are production-only and authorize through the global `door_staff` table, so an invited server (a `server` membership) is not recognised by them. Building the server Orders/Scan/money screens needs their definitions: **user, please paste-run `supabase/audit/06_server_desk_definitions.sql` in the SQL editor (read only, definitions only, no rows) and send the CSV**, or run `supabase db pull`.
+- **Built meanwhile (needs no unseen tables):** website branch `feat/server-desk-foundation` (`df421e8`, `f65752d`, stacked on `feat/organizer-create-event`, **no PR opened yet**): `20261014100000_table_servers.sql` (one server per booking; assign/unassign/list; `my_assigned_tables`) and `20261014110000_service_requests.sql` (create/list/update requests; first to acknowledge owns; dedupe by unique index), DB tests 120 and 130, a two-servers race in `concurrency.sh`; 1209 assertions; mutation-checked. Vendor branch `feat/server-desk` (`dd629cc`, stacked on `feat/photos-tables-bottles-events`, **no PR opened yet**): My Tables, Requests, and a Server line on the Floor/venue Bookings; 790 tests, analyzer at 156. The last 20 Floor/picker mutants were NOT run.
+- **Apply order if/when going live:** the earlier website migrations, then these two. Client to confirm: assignment is per booking (no individual tables yet).
+
 ## Waiting on the user
 
 1. Execute (or confirm you have executed) `supabase/go-live/README.md`, then run the postflight and send the result. 2. Decide whether a staging project is still wanted. 3. Merge the vendor PRs in order (open them first) and the monorepo branch if wanted.
