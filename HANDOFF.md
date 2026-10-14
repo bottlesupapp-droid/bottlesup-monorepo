@@ -205,16 +205,45 @@ Legend: **You** = needs the user (access, accounts, decisions); **Me** = Claude 
 
 **Critical path to a first release:** 1-5 (client fixes live), then 6, 8, 10-16, 18-20. Phase 6 runs alongside and decides how soon the full product exists.
 
-## Phase 6 step 23 in progress (14 Oct): server dashboard
+## Phase 6 step 23 in progress (14 Oct): server dashboard, bottle orders, payments, Tonight
 
-- **Blocked part:** the website's server screens (`list_my_tables`, bottle orders, payment evidence) are production-only and authorize through the global `door_staff` table, so an invited server (a `server` membership) is not recognised by them. Building the server Orders/Scan/money screens needs their definitions: **user, please paste-run `supabase/audit/06_server_desk_definitions.sql` in the SQL editor (read only, definitions only, no rows) and send the CSV**, or run `supabase db pull`.
-- **Built meanwhile (needs no unseen tables):** website branch `feat/server-desk-foundation` (`df421e8`, `f65752d`, stacked on `feat/organizer-create-event`, **no PR opened yet**): `20261014100000_table_servers.sql` (one server per booking; assign/unassign/list; `my_assigned_tables`) and `20261014110000_service_requests.sql` (create/list/update requests; first to acknowledge owns; dedupe by unique index), DB tests 120 and 130, a two-servers race in `concurrency.sh`; 1209 assertions; mutation-checked. Vendor branch `feat/server-desk` (`dd629cc`, stacked on `feat/photos-tables-bottles-events`, **no PR opened yet**): My Tables, Requests, and a Server line on the Floor/venue Bookings; 790 tests, analyzer at 156. The last 20 Floor/picker mutants were NOT run.
-- **Apply order if/when going live:** the earlier website migrations, then these two. Client to confirm: assignment is per booking (no individual tables yet).
+The user ran `supabase/audit/06_server_desk_definitions.sql` on production (14 Oct) and sent the result, which unblocked the money side. Findings that shaped the build
+(and that the user should know about; none was changed in production):
+
+- Production's staff functions (`record_club_payment`, `update_bottle_service_status`, `list_my_*`, `manager_verify_club_payment`, ...) authorize through the global
+  `door_staff` / `cms_admins` tables. An invited `server`, `verifier` or club `manager` (a `site_memberships` role) is in neither, so they are refused.
+- They also: let **any** `door_staff` row record a payment for **any** club's booking (no venue check; `door_staff.can_record_payments` is never read); show a door-staff row with
+  no event assigned **every club's** tables, bottle orders and alerts (`v_venue_id is null or ...`); never look at `door_staff.access_start_at/access_end_at`
+  (`is_door_staff()` is just "a row exists", so an expired temporary staff member is still authorized unless something else deletes the row); let the person who recorded a payment verify it
+  and a second verification overwrite the first; and the `club-payment-receipts` bucket lets any door staff / CMS admin read any club's receipts.
+- **To check, not confirmed (run `supabase/audit/07_check_access_findings.sql`, read only, counts only, and send the grid):** `profiles` has an UPDATE policy `auth.uid() = id` with no WITH CHECK and `authenticated` holds UPDATE on the whole table, and the policy
+  "profiles: admin full access" is `is_admin()`. If `is_admin()` reads `profiles.is_admin` or `role`, any signed-in user can make themselves admin of the legacy tables. The definition of
+  `is_admin()` was not in the report: run `select pg_get_functiondef('public.is_admin()'::regprocedure)`. Same shape on `event_table_bookings` (a customer can update their own booking's
+  `status`/`payment_status`), and any signed-in user can overwrite any object in the `bottles` bucket.
+- Fresh databases do not have the money tables/columns (`site_table_booking_club_payments`, `amount_paid_cents`, `service_status`, ...): they exist only in production. The new migrations stop with
+  a message naming what is missing (answer: `supabase db pull`); the DB tests build the minimum shape from `tests/db/prod_shapes/` right before the migration that needs it.
+
+**Website** branch `feat/server-desk-foundation` (stacked on `feat/organizer-create-event`, **no PR opened yet**): `df421e8`, `f65752d`, and `3a69a51` (new):
+`20261014120000_desk_orders.sql` (who stands where towards a booking, a night's orders, one table's orders, moving an order) and `20261014130000_desk_payments.sql`
+(a table's money, recording a payment with receipt evidence, the verifier's queue and verifying, per-table status, Tonight's numbers, receipt storage policies). DB tests `140`, `150`, four new races in `concurrency.sh`,
+1498 assertions; `tests/db/tools/mutate_migrations.py`: 137 of 140 mutants killed (3 equivalent/defensive). Docs: `ACCOUNT_ONBOARDING.md` (new section), `tests/README.md`.
+
+**Vendor** branch `feat/server-desk` (stacked on `feat/photos-tables-bottles-events`, **no PR opened yet**): My Tables/Requests/assignment (`dd629cc`) plus the table service (uncommitted until the mutation check below finishes):
+server and manager **Orders**, a table's page (money, orders, payments), **Record a payment** with the receipt photo, verifier **Review**, manager **Tonight**, "next action" on each server card,
+"Orders and payments" on the Floor. 1033+ tests, analyzer at 156 (the old baseline). See `apps/bottles-up-vendor/CLAUDE.md` "Table service".
+
+- **Not run against a real database or a real phone.** Try the camera + private-bucket upload on a real phone, and apply the migrations on staging first.
+- **Apply order if/when going live:** the earlier website migrations, then `20261014100000`, `110000`, `120000`, `130000`. The last two need the production tables above.
+- **Client decisions still blocking parts of step 23/24:** brief states "Submitted > Accepted > Preparing > On the way > Delivered" vs the database's five (`awaiting_prep`, `preparing`, `ready`,
+  `picked_up`, `served`; no "accepted", an extra "ready"); partial delivery needs a delivered quantity column; how long an order may wait before it "needs attention"; cashier role vs manager as reviewer;
+  flagging a payment and settling a dispute; cash handover between server and cashier; individual tables (assignment is per booking).
+- **Not built:** flag/resolve a payment, cash handover, corrections and refunds, partial delivery, a service estimate and "mark seated" (server Scan), manager checklist to prepare/close the night, slow-order and low-stock alerts, owner Money and Reports, walk-ins, door sales/VIP/overrides.
 
 ## Waiting on the user
 
 1. Execute (or confirm you have executed) `supabase/go-live/README.md`, then run the postflight and send the result. 2. Decide whether a staging project is still wanted. 3. Merge the vendor PRs in order (open them first) and the monorepo branch if wanted.
 4. User-app bundle ID. 5. Android keystore, Apple signing, privacy-policy text. 6. Apply migrations (staging first once it exists), deploy `send-team-invitation`, set the flag.
+7. Run `supabase/audit/07_check_access_findings.sql` in the SQL editor and send the grid (whether any signed-in user can make themselves an admin of the legacy tables; how many staff rows see every club or have an expired window).
 
 ## Next steps for Claude, in order
 
@@ -223,7 +252,7 @@ Legend: **You** = needs the user (access, accounts, decisions); **Me** = Claude 
 2. Vendor owner editors still missing: the venue gallery, placing tables on a floor plan (website CMS only), claiming an existing venue. Tables, bottles and times are done (branch `feat/owner-setup-editors`); the rule port is `lib/features/owner/logic/setup_forms.dart`.
 3. (done: owner/manager Team tab on `feat/owner-team`; organizer Home/Events on `feat/organizer-events`.) Next vendor options: shift creation, deep links for invitations, release plumbing (see the readiness section), door staff for an organizer's events, the organizer's ticket tiers once the client decides (brief section 7).
 4. After the user answers the preflight: fix anything it finds (a name collision, a differing live function).
-5. After `supabase db pull`: bottle orders, collected money, server/table-service screens (website and vendor).
+5. (done 14 Oct: bottle orders, payments, verifier queue, Tonight. Left in step 23: walk-ins, door sales/VIP/overrides, owner Money and Reports; they need client decisions in step 22 for some parts.)
 6. User app: after the bundle-ID decision, rebase, fix the template test, then begin moving bookings/payments onto `site_*`.
 
 ## Where things are
