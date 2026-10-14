@@ -85,30 +85,53 @@ The client reported two things (a screen recording of the onboarding page was at
 - The client is already using the onboarding pages, so the go-live runbook (or enough of it) must have been run and the flag turned on somewhere; not confirmed with the user.
 - Tell the client: events they create are private drafts until BottlesUp publishes them.
 
-## Vendor app (`bottles-up-vendor`): nine stacked branches, none merged
+## Vendor app (`bottles-up-vendor`): ten stacked branches, none merged
 
 `main` `1e7cb72` (1 Jul) → `chore/archive-unused-features` `09f3038` → `feat/workspaces` `7ac43fe` → `feat/door-on-website-functions` `9b8dd32` →
-`feat/manager-floor` `8af0d05` → `feat/owner-venues` `4ab7b3c` → `feat/owner-setup-editors` `34e1dd1` → `feat/owner-team` `bc6c5ad` → `feat/organizer-events` `d85d03f` → `feat/owner-profile-floors` `9f44763` (all pushed; no PRs opened yet). Merge in that order.
+`feat/manager-floor` `8af0d05` → `feat/owner-venues` `4ab7b3c` → `feat/owner-setup-editors` `34e1dd1` → `feat/owner-team` `bc6c5ad` → `feat/organizer-events` `d85d03f` → `feat/owner-profile-floors` `9f44763` → `feat/photos-tables-bottles-events` `d467087` (all pushed; no PRs opened yet). Merge in that order.
 
 - Built on the website's functions: workspaces (`my_workspaces`, `accept_invitation`), door **Scan + Guests** (door role only), manager **Floor** (bookings by night,
   `list_venue_bookings`), owner **Home** (tonight across venues) and **Venues** (list, add venue, per-venue Bookings / Setup / Link tabs with QR), and the owner's
   **setup editors**: tables, bottle menu, booking times (the Setup tab's `tables`/`bottles`/`booking_rules` steps open them; `save_venue_table_type`, `save_venue_bottle`,
-  `add_venue_time_slot` and the `list_/remove_` pairs). Photos and floor plans are NOT editable in the app yet (payloads never send `image_url`, so edits keep photos).
+  `add_venue_time_slot` and the `list_/remove_` pairs).
   The owner's and manager's **Team** tab (`lib/features/team/`): list, invite (role from `invitable_roles`, optional temporary window and shift), send a new link, cancel, remove
   (`list_team`, `list_team_invitations`, `list_shifts`, `invite_member`, `resend_invitation`, `revoke_invitation`, `revoke_membership`; email via the `send-team-invitation` edge function, link shown once with Copy / mailto fallback). Not yet: creating a shift, changing a member's role or window.
   The organizer's **Home and Events** tabs (`lib/features/organizer_events/`): list (drafts / upcoming / past), create, edit and remove drafts on `list_org_events` / `save_org_event` /
-  `remove_org_event` (website PR #3; **needs that migration applied**). An organizer cannot publish; the payload leaves `cover_image_url` out so edits keep the photo; no ticket tiers / venue link yet.
+  `remove_org_event` (website PR #3; **needs that migration applied**). An organizer cannot publish; cover photo supported; no ticket tiers / venue link yet.
   The owner's **venue profile** (name, description, address, cover photo: `update_venue_profile`) and **floor plans** (`list_/save_/remove_venue_floor`, name + image) editors on the venue's Setup tab, with
   **photo upload** (`PhotoField` + `MediaService` + `media_rules.dart`: gallery picker, real-type sniff, JPEG/PNG/WebP <= 5 MB, into `<org id>/<uuid>.<ext>` of the public `business-media` bucket).
-  **Not tried with the real picker or real storage** (no staging, needs a phone); old photo files are never deleted. The same `PhotoField` will give tables, bottles and events photos next.
+  **Photos for tables (`image_url`), bottles (`image_url`) and event covers (`cover_image_url`)** use the same `PhotoField` (thumbnails on the list cards; Remove sends none; Save waits for the upload).
+  **Not tried with the real picker or real storage** (no staging, needs a phone); old photo files are never deleted.
   Rules are Dart ports of the website's rule modules. All screens say "not set up on this server yet" until the website migrations are applied.
 - Still placeholders: server screens (Scan/My Tables/Orders/Requests: prod-only functions), Door Sales, manager Tonight/Orders/Team/More, owner Money/Reports/More, organizer, security, verifier.
-- Checks: 648 tests, analyzer 0 errors, 142 infos and 14 old unused-import warnings in unrelated files (none in owner code). Run once under a DST zone: `TZ=America/Toronto flutter test`. Look at screens with a throwaway
+- Checks: 670 tests, analyzer 0 errors, 142 infos and 14 old unused-import warnings in unrelated files (none in owner code). Run once under a DST zone: `TZ=America/Toronto flutter test`. Look at screens with a throwaway
   Flutter **web** build served locally and the built-in browser (click `flt-semantics-placeholder` to enable accessibility; delete the demo file and `build/web` after).
 - Release blockers (user actions): Android `key.properties`/keystore (build fails without it on purpose); Apple team `4T453RG45S` has no signing identity and both
   iPhones were offline; register App ID `com.bottlesup.vendor`; real privacy-policy text; crash reporting; no iOS privacy manifest; camera never tested on a phone.
 - Reads/writes legacy tables (`events`, `clubs`, `events_bookings`, `table_bookings`...) everywhere else: the classic dashboard and the old scanner are untouched.
   `CLAUDE.md` in that repo is accurate; the many `*_SUMMARY.md` / `PRODUCTION_READY*.md` files are stale, ignore them.
+
+### Vendor app: production readiness (14 Oct) - what is done and what is left
+
+**Verdict:** not production-ready as the full Phase 2 product. A narrow first release (owner setup + team + door + manager Floor + organizer drafts) is one set of user actions away
+(merge, apply migrations, signing, real-device test). Money, table service and most of the 31-section brief are not built.
+
+**Done (built, tested with fakes, pushed, unmerged):** workspaces + role navigation + accept-invitation screen; door Scan + Guests; manager Floor; owner Home (tonight across venues), Venues (add venue, per-venue
+Bookings / Setup / Link + QR); owner/manager setup editors: venue profile + cover, floor plans + images, tables + photos, bottle menu + photos, booking times; owner/manager Team (invite, links, cancel, remove);
+organizer Home/Events (create / edit / remove drafts, cover photo). 670 tests incl. drift guards against the website's SQL/TypeScript, a DST-zone run, and mutation testing of every slice.
+
+**Left, user actions (blockers):** merge the ten vendor branches and website PRs #2/#3; apply website migrations 1-9 and run the post-flight + `supabase/audit/05_...`; deploy `send-team-invitation`;
+decide on a staging Supabase project (nothing has ever run against a real database); Android keystore (`android/key.properties`); Apple signing identity + App ID `com.bottlesup.vendor` (team `4T453RG45S`);
+real privacy-policy text and store listing; a real-device pass (door camera, photo picker + upload incl. an iPhone HEIC, invitation email -> accept, poor connectivity).
+
+**Left, code in this app:** crash reporting (none: no Sentry/Crashlytics); iOS `PrivacyInfo.xcprivacy` for the Runner target (only pods have one); deep/universal links so an invitation link opens the app (today it opens the
+website page; Android has no app-link intent filter, iOS no associated domains); CI for the vendor repo (none); decide the fate of the classic vendor dashboard + old scanner (legacy tables, untouched, not on `site_*`);
+shift creation, change a member's role/window, claim an existing venue, venue gallery; analyzer clean-up (156 old issues, 14 warnings); an accessibility / offline / error-state pass; push notifications (none).
+
+**Left, brief features not built in the app:** server dashboard (My Tables, Orders, Scan, Requests), bottle orders and delivery states, payment evidence + verifier queue, cash handover, walk-ins, service requests, door sales / VIP /
+exit-occupancy / override, promo codes, complimentary bottles + claim link, venue VIP list, inventory ledger, chat + notifications, sales-source / POS, organizer ticket tiers / venue linking / agreements / settlement / payouts,
+refunds + settlement adjustments, close night + PDF reports, manager Tonight / Orders / More, owner Money / Reports / More, security and verifier workspaces, organizer Guests / chat / team, business onboarding + verification (website only).
+Most of the money and table-service items are blocked on `supabase db pull` (production-only functions) and on the client decisions listed above.
 
 ## User app (`bottles-up-user`): not production-ready, untouched since the archive cut
 
@@ -143,8 +166,8 @@ they are checked out on feature branches; do not commit those pointers until the
 
 0. After the detour: the two website PRs are green; merge #2 then #3 (user), apply migrations 8 and 9 (user), fix whatever the user reports from applying migrations 8 and 9, and decide with the client whether verified organizers may publish, plus ticket tiers for organizer events (brief section 7). Then resume the vendor app at item 1 below.
 1. Open PRs for the five vendor branches (stacked; describe the order) if the user wants them; update the tracker doc's "Progress since 6 Oct" tab with the vendor-app work.
-2. Vendor owner editors still missing: photos for tables and bottles (`image_url`), the venue gallery, placing tables on a floor plan (website CMS only). Tables, bottles and times are done (branch `feat/owner-setup-editors`); the rule port is `lib/features/owner/logic/setup_forms.dart`.
-3. (done: owner/manager Team tab on `feat/owner-team`; organizer Home/Events on `feat/organizer-events`.) Next vendor options: photos for tables, bottles and event covers (reuse `PhotoField`; their payloads currently omit `image_url` / `cover_image_url` on purpose), shift creation, door staff for an organizer's events, the organizer's ticket tiers once the client decides (brief section 7).
+2. Vendor owner editors still missing: the venue gallery, placing tables on a floor plan (website CMS only), claiming an existing venue. Tables, bottles and times are done (branch `feat/owner-setup-editors`); the rule port is `lib/features/owner/logic/setup_forms.dart`.
+3. (done: owner/manager Team tab on `feat/owner-team`; organizer Home/Events on `feat/organizer-events`.) Next vendor options: shift creation, deep links for invitations, release plumbing (see the readiness section), door staff for an organizer's events, the organizer's ticket tiers once the client decides (brief section 7).
 4. After the user answers the preflight: fix anything it finds (a name collision, a differing live function).
 5. After `supabase db pull`: bottle orders, collected money, server/table-service screens (website and vendor).
 6. User app: after the bundle-ID decision, rebase, fix the template test, then begin moving bookings/payments onto `site_*`.
@@ -159,6 +182,7 @@ they are checked out on feature branches; do not commit those pointers until the
 ## Session log (newest first)
 
 - 2026-10-13: website CI re-run: both PRs (#2, #3) are green, including the database job on Postgres 17. Still to do (user): merge #2 then #3, apply migrations 8 and 9, run `supabase/audit/05_check_client_feedback_fixes.sql`, redeploy.
+- 2026-10-14 (later): **photos for tables, bottles and event covers** built and pushed as `feat/photos-tables-bottles-events` `d467087` (22 more tests; 42 mutants, all caught; a new test that failed on clean code was caught by re-running the baseline).
 - 2026-10-14: **venue profile + floor plans + photo upload** built and pushed as `feat/owner-profile-floors` `9f44763` (65 new tests; mutation results redone after a killed run left a stray line the residue check could not see; remaining survivors are two defensive duplicates).
   Lesson: a mutation run killed mid-way can leave a *superset* edit that a "does the original text still exist" check cannot detect; always re-run the unmutated baseline before trusting results, and run mutants in foreground chunks with a process-group timeout.
 - 2026-10-10 (latest): organizer **Home/Events** screens built, tested (69 new tests; 69 mutants, real survivors fixed) and pushed as `feat/organizer-events` `d85d03f`; vendor CLAUDE.md updated.
