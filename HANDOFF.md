@@ -88,7 +88,7 @@ The client reported two things (a screen recording of the onboarding page was at
 ## Vendor app (`bottles-up-vendor`): ten stacked branches, none merged
 
 `main` `1e7cb72` (1 Jul) → `chore/archive-unused-features` `09f3038` → `feat/workspaces` `7ac43fe` → `feat/door-on-website-functions` `9b8dd32` →
-`feat/manager-floor` `8af0d05` → `feat/owner-venues` `4ab7b3c` → `feat/owner-setup-editors` `34e1dd1` → `feat/owner-team` `bc6c5ad` → `feat/organizer-events` `d85d03f` → `feat/owner-profile-floors` `9f44763` → `feat/photos-tables-bottles-events` `d467087` (all pushed; no PRs opened yet). Merge in that order.
+`feat/manager-floor` `8af0d05` → `feat/owner-venues` `4ab7b3c` → `feat/owner-setup-editors` `34e1dd1` → `feat/owner-team` `bc6c5ad` → `feat/organizer-events` `d85d03f` → `feat/owner-profile-floors` `9f44763` → `feat/photos-tables-bottles-events` `d467087` (all pushed). **PRs open, stacked: each PR's base is the previous branch; merge #1 first, oldest to newest** ([#1](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/1) archive, [#2](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/2) workspaces, [#3](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/3) door, [#4](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/4) manager Floor, [#5](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/5) owner Home/Venues, [#6](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/6) setup editors, [#7](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/7) Team, [#8](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/8) organizer Events, [#9](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/9) profile + floors, [#10](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/10) photos). After each merge GitHub should retarget the next PR to `main`; if not, change its base by hand. The repo has no CI.
 
 - Built on the website's functions: workspaces (`my_workspaces`, `accept_invitation`), door **Scan + Guests** (door role only), manager **Floor** (bookings by night,
   `list_venue_bookings`), owner **Home** (tonight across venues) and **Venues** (list, add venue, per-venue Bookings / Setup / Link tabs with QR), and the owner's
@@ -157,6 +157,54 @@ they are checked out on feature branches; do not commit those pointers until the
 - **Open client decisions** (block parts of the build): cashier role vs manager as reviewer; Stripe in-person and devices; whether Phase 2 executes organizer payouts or only records them;
   POS providers; final fee rates and who bears them; default timer durations; whether existing partner accounts migrate.
 
+## ROADMAP: everything pending, in order (14 Oct)
+
+Legend: **You** = needs the user (access, accounts, decisions); **Me** = Claude can do it once its input exists. A step waits on the steps named after "needs". Update this as steps complete.
+
+### Phase 1: ship the two client fixes (website)
+1. **You:** confirm which of the first seven website migrations are live: run `supabase/audit/04_postflight_website_migrations.sql`. If any are missing, apply them first (runbook `supabase/go-live/README.md`, sections 1-5). *(State unknown; the client is already using the onboarding pages, so some are applied.)*
+2. **You** (needs 1): apply `20261012100000_cancel_business.sql`, then `20261013100000_organizer_events.sql` in the SQL editor.
+3. **You** (needs 2): run `supabase/audit/05_check_client_feedback_fixes.sql` and send me the result; its first row must say OK.
+4. **You** (needs 2): merge website PR [#2](https://github.com/KDR9MGR/bottles-up-website/pull/2), then [#3](https://github.com/KDR9MGR/bottles-up-website/pull/3) (CI is green on both). Merging redeploys the site.
+5. **You** (needs 4): smoke test as the client would (cancel the "Eonics Lounge" business; create an event as an organizer) and reply to them. Tell them events stay private drafts until BottlesUp publishes them.
+
+### Phase 2: a safe place to test
+6. **You:** decide on a staging Supabase project and create it if yes (nothing in the vendor app has ever run against a real database).
+7. **Me** (needs 6): replay all migrations on staging first (rehearsal), and write a short "point the app at staging" note (`--dart-define=SUPABASE_URL=... SUPABASE_ANON_KEY=...`).
+
+### Phase 3: merge the vendor app
+8. **You or Me:** merge the ten vendor PRs in order (links in the vendor section above). The repo has no CI.
+9. **Me** (needs 8): re-run all tests on `main`, then update the monorepo's submodule pointer for the vendor app (kept unbumped while branches are unmerged).
+
+### Phase 4: release plumbing (needs 8; items are independent)
+10. **You:** Android keystore and `android/key.properties` (the release build refuses to run without it, on purpose).
+11. **You:** Apple signing identity, and register App ID `com.bottlesup.vendor` (team `4T453RG45S`).
+12. **You or the client:** the real privacy-policy text (the in-app screen is placeholder boilerplate) and the store listing.
+13. **You:** choose a crash-reporting service (suggested: Sentry). 14. **Me** (needs 13): wire it up (none exists today).
+15. **Me:** add the iOS privacy manifest `PrivacyInfo.xcprivacy` for the Runner target (only the pods have one).
+16. **Me:** add CI to the vendor repo (tests + analyze on every PR).
+17. **Me** (if wanted): deep/universal links so an invitation link opens the app (Android app links, iOS associated domains, the website's verification file). Today it opens the website page.
+
+### Phase 5: real-device pass and release (needs 2-3, plus 10/11 for iOS)
+18. **You, with Me fixing:** test on real phones against staging or production: the door camera on a real ticket; the photo picker and upload (incl. an iPhone HEIC photo); invite by email through to accepting; poor connectivity.
+19. **Me** (needs 18): fix what it finds.
+20. **You:** TestFlight and Play internal testing with the client, then store submission. **First realistic release: owner setup + team + door + manager Floor + organizer drafts.**
+
+### Phase 6: money and table service (can start now, in parallel with phases 1-5)
+21. **You:** run `supabase db pull` against production so its own functions and columns are committed to the website repo. Biggest blocker for the server screens, bottle orders and payment evidence.
+22. **Client decisions:** cashier role vs manager as reviewer; Stripe in-person and devices; whether Phase 2 executes organizer payouts or only records them; POS providers; final fees and who bears them; default timers (holds, invitations, reminders, escalation); whether existing partner accounts migrate; whether a verified organizer may publish its own events; who sets up ticket tiers.
+23. **Me** (needs 21), in this order: server dashboard (My Tables / Orders / Scan / Requests) -> bottle orders and delivery states -> payment evidence and the verifier queue -> manager Tonight and Orders -> walk-ins and service requests -> door sales / VIP / overrides -> owner Money and Reports.
+24. **Me** (needs the matching decisions in 22): organizer ticket tiers, venue linking and agreements, settlement and payouts; refunds; close night with PDF reports; chat and push notifications; inventory, promo codes, complimentary bottles, venue VIP list; security and verifier workspaces.
+
+### Smaller items, any time (Me)
+25. Shift creation in Team, change a member's role or window, claim an existing venue, the venue gallery.
+26. Decide with the user whether to archive the classic vendor dashboard + old scanner (legacy tables) or move them onto `site_*`.
+27. Clean up the 156 old analyzer issues (14 warnings); accessibility and offline / error-state pass.
+28. User app (`bottles-up-user`): after the bundle-ID decision (`com.btlup.pop` / `com.bottlesUpUser` / `com.bottlesupuser`), rebase the archive branch onto `main`, fix the template test, then move it onto `site_*`.
+29. Refresh the shareable tracker doc with the recent work; keep this file current after each step.
+
+**Critical path to a first release:** 1-5 (client fixes live), then 6, 8, 10-16, 18-20. Phase 6 runs alongside and decides how soon the full product exists.
+
 ## Waiting on the user
 
 1. Execute (or confirm you have executed) `supabase/go-live/README.md`, then run the postflight and send the result. 2. Decide whether a staging project is still wanted. 3. Merge the vendor PRs in order (open them first) and the monorepo branch if wanted.
@@ -182,6 +230,7 @@ they are checked out on feature branches; do not commit those pointers until the
 ## Session log (newest first)
 
 - 2026-10-13: website CI re-run: both PRs (#2, #3) are green, including the database job on Postgres 17. Still to do (user): merge #2 then #3, apply migrations 8 and 9, run `supabase/audit/05_check_client_feedback_fixes.sql`, redeploy.
+- 2026-10-14 (latest): ten stacked vendor PRs opened ([#1](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/1) .. [#10](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/10)); the full ROADMAP (phases 1-6, steps 1-29) added to this file.
 - 2026-10-14 (later): **photos for tables, bottles and event covers** built and pushed as `feat/photos-tables-bottles-events` `d467087` (22 more tests; 42 mutants, all caught; a new test that failed on clean code was caught by re-running the baseline).
 - 2026-10-14: **venue profile + floor plans + photo upload** built and pushed as `feat/owner-profile-floors` `9f44763` (65 new tests; mutation results redone after a killed run left a stray line the residue check could not see; remaining survivors are two defensive duplicates).
   Lesson: a mutation run killed mid-way can leave a *superset* edit that a "does the original text still exist" check cannot detect; always re-run the unmutated baseline before trusting results, and run mutants in foreground chunks with a process-group timeout.
