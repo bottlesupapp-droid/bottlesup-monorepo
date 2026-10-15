@@ -75,6 +75,15 @@ need), in `apps/bottles-up-website-main/supabase/migrations/`.
 which production never lets anyone delete), inviting staff (a real email). For a client walk-through use a test business and your own email addresses,
 and do not record payments against a real guest's booking.
 
+### 1d. Optional: a demo night for the walk-through
+
+Without bookings and bottle orders the new tabs are empty. `supabase/go-live/demo_night.sql` adds three clearly-marked demo tables to a club of your
+choice (customer e-mails end in `@demo.bottlesup.invalid`, codes start with `DEMO-`): one that owes money with three bottles, one paid up and arrived,
+one with no server. Edit the three values at the top (club name, a server's e-mail, the night), run it in the SQL editor, and the server's phone shows it.
+`supabase/go-live/demo_night_cleanup.sql` removes exactly those tables again, with anything recorded against them. Both were tested on a scratch
+database (the server sees their two tables, the manager all three, a payment recorded in the app is removed by the cleanup, a real booking beside them
+is untouched). They are real rows in production tables while they exist: they show in the CMS bookings list and may count in its totals.
+
 ## 2. Check it (read only)
 
 Run `supabase/audit/04_postflight_website_migrations.sql` in the same SQL editor. The first row must say `OK`. Anything marked `STOP`
