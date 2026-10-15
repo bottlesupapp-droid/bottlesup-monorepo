@@ -228,9 +228,9 @@ The user ran `supabase/audit/06_server_desk_definitions.sql` on production (14 O
 (a table's money, recording a payment with receipt evidence, the verifier's queue and verifying, per-table status, Tonight's numbers, receipt storage policies). DB tests `140`, `150`, four new races in `concurrency.sh`,
 1498 assertions; `tests/db/tools/mutate_migrations.py`: 137 of 140 mutants killed (3 equivalent/defensive). Docs: `ACCOUNT_ONBOARDING.md` (new section), `tests/README.md`.
 
-**Vendor** branch `feat/server-desk` (stacked on `feat/photos-tables-bottles-events`, **no PR opened yet**): My Tables/Requests/assignment (`dd629cc`) plus the table service (uncommitted until the mutation check below finishes):
+**Vendor** branch `feat/server-desk` (stacked on `feat/photos-tables-bottles-events`, **no PR opened yet**): My Tables/Requests/assignment (`dd629cc`) plus the table service (`414f3e8`, pushed):
 server and manager **Orders**, a table's page (money, orders, payments), **Record a payment** with the receipt photo, verifier **Review**, manager **Tonight**, "next action" on each server card,
-"Orders and payments" on the Floor. 1033+ tests, analyzer at 156 (the old baseline). See `apps/bottles-up-vendor/CLAUDE.md` "Table service".
+"Orders and payments" on the Floor. 1075 tests, analyzer at 156 (the old baseline). Mutation-checked with `tool/mutate_dart.py`: rules/service 126 of 129 killed, screens/widgets 101 of 107 (the survivors are equivalent or already killed by the long-list tests); every real gap found was closed with a test. See `apps/bottles-up-vendor/CLAUDE.md` "Table service".
 
 - **Not run against a real database or a real phone.** Try the camera + private-bucket upload on a real phone, and apply the migrations on staging first.
 - **Apply order if/when going live:** the earlier website migrations, then `20261014100000`, `110000`, `120000`, `130000`. The last two need the production tables above.
@@ -263,6 +263,9 @@ server and manager **Orders**, a table's page (money, orders, payments), **Recor
 - Memory (one profile only): `/Users/abdulrazak/.claude/projects/-Users-abdulrazak-Documents-bottlesup-monorepo-main/memory/`. This file is the portable copy of what matters.
 
 ## Session log (newest first)
+
+- 2026-10-15: **table service** built and pushed. Website `3a69a51` (desk_orders + desk_payments migrations, tests 140/150, four races, `prod_shapes` fixtures, `tests/db/tools/mutate_migrations.py`) and vendor `414f3e8` (Orders, table page, Record a payment, Review, Tonight). Added `supabase/audit/07_check_access_findings.sql`. The user asked whether the vendor app is ready for prod and for an APK: answered no / not yet (see the next section); an APK needs the Android licences accepted on this Mac (`flutter doctor --android-licenses`) and a decision on staging vs production.
+  Lessons: the Mac idle-sleeps in the middle of long runs and makes them look hung (memory `long-runs-keep-awake`; call `request_keep_awake`); at most 3 parallel flutter workers; a mutation test silently skipped when its `replace` pattern no longer matches after `dart format`, so always `assert` the pattern.
 
 - 2026-10-13: website CI re-run: both PRs (#2, #3) are green, including the database job on Postgres 17. Still to do (user): merge #2 then #3, apply migrations 8 and 9, run `supabase/audit/05_check_client_feedback_fixes.sql`, redeploy.
 - 2026-10-14 (latest): ten stacked vendor PRs opened ([#1](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/1) .. [#10](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/10)); the full ROADMAP (phases 1-6, steps 1-29) added to this file.
