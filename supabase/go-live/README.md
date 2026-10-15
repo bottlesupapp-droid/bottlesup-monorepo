@@ -49,6 +49,32 @@ row must say `OK`.
 If one fails, **stop and send me the error text**. A failed run should leave nothing half-applied (each file stops at its first problem
 and a multi-statement run is normally all-or-nothing), but do not run later files until it is understood.
 
+### 1c. Four more migrations for the vendor app's table service (server desk, orders, payments, Tonight)
+
+Needed by the vendor app's **My Tables, Orders, Requests, Review and Tonight** tabs and **Record a payment**. Until they are applied those tabs say
+"not set up on this server yet". They are **additive and nothing on the website or in the older apps calls them**, so applying them changes nothing
+for anyone who is not using the new app. They create 2 tables, 23 functions and 2 storage policies on the private receipt bucket; they do not alter or
+replace any existing table, function or policy. They are on the website branch `feat/server-desk-foundation` (not merged; the SQL files are all you
+need), in `apps/bottles-up-website-main/supabase/migrations/`.
+
+1. Section 1 and 1b are done and `05_check_client_feedback_fixes.sql` says OK.
+2. Run `supabase/audit/08_preflight_table_service.sql` (read only). The first row must say `OK`. A `STOP` names what is missing or already taken: send me the grid.
+3. Apply, in this order, the same way as above (copy, paste, Run, wait for success):
+   - `20261014100000_table_servers.sql`
+   - `20261014110000_service_requests.sql`
+   - `20261014120000_desk_orders.sql`
+   - `20261014130000_desk_payments.sql`
+
+   The last two stop with a message, changing nothing, if a production-only money column is missing.
+4. Run `supabase/audit/09_postflight_table_service.sql` (read only). The first row must say `OK`: 23 functions, none callable by anonymous visitors, the 5
+   internal helpers not callable by signed-in people, the two new tables closed to direct access.
+5. To undo all of it: `supabase/go-live/rollback_table_service.sql` (one transaction; it removes only these objects; payments already recorded
+   stay, because they live in production's own table).
+
+**Once the app is pointed at production, everything done in it is real**: moving an order, recording a payment (it adds a row to the club payments table,
+which production never lets anyone delete), inviting staff (a real email). For a client walk-through use a test business and your own email addresses,
+and do not record payments against a real guest's booking.
+
 ## 2. Check it (read only)
 
 Run `supabase/audit/04_postflight_website_migrations.sql` in the same SQL editor. The first row must say `OK`. Anything marked `STOP`
