@@ -242,7 +242,7 @@ server and manager **Orders**, a table's page (money, orders, payments), **Recor
 
 ## PHASE 2 BUILD-OUT (17-18 Oct): built and tested, NOT yet in production
 
-At the user's "push for vendor app 100% completion ... post or later test everything all at once", Claude built the remaining brief modules as complete slices (database migration + database test + app screens + app tests), on two branches, and **applied nothing to production**. One final go-ahead from the user is needed (item 17 under "Waiting on the user"). Branches: website `feat/vendor-ops-modules` (11 new migrations, in this order), vendor `feat/ops-modules` (app 1.2.0+7). Verification at the end: database suite **2337 assertions + 14 concurrency races** pass; vendor suite **1560 tests** pass; analyzer 154 issues (all old).
+At the user's "push for vendor app 100% completion ... post or later test everything all at once", Claude built the remaining brief modules as complete slices (database migration + database test + app screens + app tests), on two branches, and **applied nothing to production**. One final go-ahead from the user is needed (item 17 under "Waiting on the user"). Branches (pushed, PRs open): website `feat/vendor-ops-modules` ([#6](https://github.com/KDR9MGR/bottles-up-website/pull/6), stacked on #5; 11 new migrations, in this order), vendor `feat/ops-modules` ([#18](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/18), stacked on #17; app 1.2.0+7). Verification at the end: database suite **2337 assertions + 14 concurrency races** pass; vendor suite **1560 tests** pass; analyzer 154 issues (all old).
 
 | # | Migration (website) | What it adds | App side |
 |---|---|---|---|
