@@ -23,8 +23,7 @@ decision taken: **the website's `site_*` schema and functions are the source of 
 
 ## Rules learned the hard way (follow them)
 
-- **Production is off limits to me.** The harness blocks reading the production database (even with the user logged in to the Supabase CLI) and blocks
-  `gh pr merge`. Do not look for a way around either; ask the user to do it, or to add a permission rule. The user merged website PR #1 themselves.
+- **Production is touched ONLY on the user's explicit instruction, and only the thing they named.** Reads and writes both go through the user's logged-in Supabase CLI (the harness blocked production at first; the user added a permission rule, and it works). The method (used 16 Oct and 18 Oct): make a scratch folder, `supabase init --workdir <dir>` then `supabase link --project-ref hwmynlghrmtoufyrcihp --workdir <dir>`, run `supabase db query --linked --workdir <dir> -f file.sql` (the CLI makes a temporary `cli_login_postgres` role); apply a migration by wrapping the committed file in `begin; ... commit;` (script pattern: wrapped file, then a check that every function/table/storage policy it creates exists; stop at the first failure); read-only pre-flight first (names free, prerequisites present) and a read-only post-flight audit after (`supabase/audit/13_...` is the template); DELETE the scratch folder afterwards. Do not look for a way around a block (ask the user instead), and `gh pr merge` stays the user's click. The user merged website PR #1 themselves.
 - **There is no staging.** (The go-live runbook goes straight to production, with the user running every step.) Never apply a migration "to staging" by running it against `hwmynlghrmtoufyrcihp`. The runbook is `supabase/staging/README.md`
   (never run). The org has only two Supabase projects (production and an unrelated `habitpro`); a third may need a paid plan (unconfirmed).
 - Push **branches only**, never `main`, never force. Merges to `main` are the user's click (or an explicit rule they add).
@@ -36,6 +35,7 @@ decision taken: **the website's `site_*` schema and functions are the source of 
 - New code is **mutation-checked**: break it on purpose, confirm the tests fail, fix test gaps (two kinds of survivor are fine: redundant guards the UI makes unreachable).
 - Pure rule modules + drift-guard tests that read the website repo's files (skipped if the repo is not beside the app) keep apps and website identical.
 - Honest placeholders: a section that is not built says so; "booked" is never called "collected"; an unknown status is never shown as confirmed.
+- Lessons from the 17-18 Oct build-out: (1) a payment correction REPLACES the payment it corrects (read from production's `correct_club_payment`): every money sum must skip a row that another row `corrects_payment_id`; (2) `now()` is the START of the transaction, so anything compared with "when someone last looked" (chat messages, reads) uses `clock_timestamp()`; (3) in DB tests, call `tests.logout()` before touching closed tables directly (a leftover login makes fixture updates silently do nothing under row level security), and jsonb prints keys shorter-first (`status` before `changed`), so compare jsonb as jsonb or fix the expected string; (4) PL/pgSQL `FOUND` is reset by later statements: copy it right after the lookup; table-returning functions that name an output column like a real column need `#variable_conflict use_column`; (5) a polled list must keep what it shows when one refresh fails (`OpsAsyncView(keepWhileReloading: true)`), and a new snackbar must replace the old one (`hideCurrentSnackBar`), or messages queue behind each other; (6) for any action that adds money or stock, send a client key so a retry or double tap is ONE record; (7) `share_plus` 12 needs Android Gradle Plugin 8.12 / Gradle 8.13 / Kotlin 2.2, this project is on 8.7 / 8.10 / 2.1, so it is pinned to 10.x; (8) use bash scripts, not zsh loops, for anything with `PIPESTATUS`.
 - Environment traps: see memory `local-db-tests-postgres` (Postgres needs `LC_ALL=en_US.UTF-8` and TCP only). zsh does not word-split `$VAR` (use `bash -c`), and `$R:t` is a
   modifier (write `${R}:t`). The Claude scratchpad is wiped between sessions: keep nothing important there.
 
@@ -85,7 +85,7 @@ The client reported two things (a screen recording of the onboarding page was at
 - The client is already using the onboarding pages, so the go-live runbook (or enough of it) must have been run and the flag turned on somewhere; not confirmed with the user.
 - Tell the client: events they create are private drafts until BottlesUp publishes them.
 
-## Vendor app (`bottles-up-vendor`): ten stacked branches, none merged
+## Vendor app (`bottles-up-vendor`): history of the first ten branches (CURRENT state: see "PHASE 2 BUILD-OUT" above and the PR list)
 
 `main` `1e7cb72` (1 Jul) → `chore/archive-unused-features` `09f3038` → `feat/workspaces` `7ac43fe` → `feat/door-on-website-functions` `9b8dd32` →
 `feat/manager-floor` `8af0d05` → `feat/owner-venues` `4ab7b3c` → `feat/owner-setup-editors` `34e1dd1` → `feat/owner-team` `bc6c5ad` → `feat/organizer-events` `d85d03f` → `feat/owner-profile-floors` `9f44763` → `feat/photos-tables-bottles-events` `d467087` (all pushed). **PRs open, stacked: each PR's base is the previous branch; merge #1 first, oldest to newest** ([#1](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/1) archive, [#2](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/2) workspaces, [#3](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/3) door, [#4](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/4) manager Floor, [#5](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/5) owner Home/Venues, [#6](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/6) setup editors, [#7](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/7) Team, [#8](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/8) organizer Events, [#9](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/9) profile + floors, [#10](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/10) photos). After each merge GitHub should retarget the next PR to `main`; if not, change its base by hand. The repo has no CI.
@@ -158,7 +158,7 @@ they are checked out on feature branches; do not commit those pointers until the
 - **Open client decisions** (block parts of the build): cashier role vs manager as reviewer; Stripe in-person and devices; whether Phase 2 executes organizer payouts or only records them;
   POS providers; final fee rates and who bears them; default timer durations; whether existing partner accounts migrate.
 
-## ROADMAP: everything pending, in order (14 Oct)
+## ROADMAP (14 Oct; kept for history, SUPERSEDED by "Next steps for Claude" and "Waiting on the user")
 
 Legend: **You** = needs the user (access, accounts, decisions); **Me** = Claude can do it once its input exists. A step waits on the steps named after "needs". Update this as steps complete.
 
@@ -324,15 +324,16 @@ Use two phones or a phone and the website where noted. Demo night (16 to 18 Oct)
 17. (migrations done 18 Oct, result in the session log) Still yours: upload the rebuilt Android bundle (`app-release.aab` to Play internal testing) and the iOS build (`Vendor.ipa` via Transporter), install 1.2.0, then run TEST CHECKLIST 2. Remove the demo night afterwards (`supabase/go-live/demo_night_cleanup.sql`). Undo for the 11 migrations if ever needed: `supabase/go-live/rollback_phase2_modules.sql`.
 18. Decisions that unblock the "Not available yet" items: payment/POS provider and devices (Door Sales), discount stacking and approvals (Discounts), complimentary claim rules, whether Phase 2 executes payouts (Settlement), push/SMS providers (Notifications), and an e-mail/SMS sender for the outbox (every guest message is queued until one exists).
 
-## Next steps for Claude, in order
+## Next steps for Claude, in order (rewritten 18 Oct; the old 14 Oct list is gone)
 
-0. After the detour: the two website PRs are green; merge #2 then #3 (user), apply migrations 8 and 9 (user), fix whatever the user reports from applying migrations 8 and 9, and decide with the client whether verified organizers may publish, plus ticket tiers for organizer events (brief section 7). Then resume the vendor app at item 1 below.
-1. Open PRs for the five vendor branches (stacked; describe the order) if the user wants them; update the tracker doc's "Progress since 6 Oct" tab with the vendor-app work.
-2. Vendor owner editors still missing: the venue gallery, placing tables on a floor plan (website CMS only), claiming an existing venue. Tables, bottles and times are done (branch `feat/owner-setup-editors`); the rule port is `lib/features/owner/logic/setup_forms.dart`.
-3. (done: owner/manager Team tab on `feat/owner-team`; organizer Home/Events on `feat/organizer-events`.) Next vendor options: shift creation, deep links for invitations, release plumbing (see the readiness section), door staff for an organizer's events, the organizer's ticket tiers once the client decides (brief section 7).
-4. After the user answers the preflight: fix anything it finds (a name collision, a differing live function).
-5. (done 14 Oct: bottle orders, payments, verifier queue, Tonight. Left in step 23: walk-ins, door sales/VIP/overrides, owner Money and Reports; they need client decisions in step 22 for some parts.)
-6. User app: after the bundle-ID decision, rebase, fix the template test, then begin moving bookings/payments onto `site_*`.
+State: website `feat/vendor-ops-modules` (head `14d27b2`, PR #6) and vendor `feat/ops-modules` (head `a06e77a`, PR #18) are pushed; the 11 migrations are LIVE in production; the 1.2.0+7 builds exist but are not uploaded; nobody has used the new features yet. Check these heads with git before relying on them.
+1. Wait for the user's report from TEST CHECKLIST 2 and fix what they find (a database fix is a new migration, never an edit to an applied file; the app fix goes on `feat/ops-modules`).
+2. Schedule the chat clean-up: `chat_purge_expired()` is service-role only and nothing calls it (no pg_cron); an edge function on a schedule, or ask the user to enable pg_cron.
+3. Build the outbox sender (an edge function that reads `site_outbox` rows with status `queued` and sets `sent` / `failed`) once the user picks an e-mail/SMS provider; until then every guest message says "Queued, not sent yet".
+4. Unblock the "Not available yet" items with the client's answers (HANDOFF "Waiting on the user" item 18): Door Sales, Discounts, Complimentary bottles, Settlement, Notifications. Also still missing: a club-door VIP lookup screen (the database allows it), organizer data-sharing grants, walk-in sales and timed holds, inventory reservations, per-venue time zone.
+5. Review and merge the pull requests from the bottom up (website #2 to #6, vendor #13 to #18), then rebuild from `main`.
+6. Reconcile production's `supabase_migrations.schema_migrations` (it stops at 20260925080444) before anyone runs `supabase db push`; `supabase db pull` to commit the production-only SQL (17 RPCs, `profiles`, `promo_codes`...).
+7. User app: after the bundle-ID decision, rebase, fix the template test, then move bookings/payments onto `site_*`. Deep links for invitations once the Play App Signing fingerprint and Associated Domains exist.
 
 ## Where things are
 
