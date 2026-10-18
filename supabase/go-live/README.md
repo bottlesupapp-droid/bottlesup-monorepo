@@ -84,6 +84,13 @@ one with no server. Edit the three values at the top (club name, a server's e-ma
 database (the server sees their two tables, the manager all three, a payment recorded in the app is removed by the cleanup, a real booking beside them
 is untouched). They are real rows in production tables while they exist: they show in the CMS bookings list and may count in its totals.
 
+### 1e. Two September files that are NOT applied (they are already live)
+
+`20260923100000_guest_tickets_and_checkin_fix.sql` and `20260925100000_after_midnight_availability.sql` (website PR #7) record changes that were made by hand in
+production on 23 and 25 Sep, which is why production's `checkin_ticket()` differs from the repository (see the findings above). Running them there prints "already applied"
+and changes nothing, but there is no reason to run them: skip them, and run the read-only `supabase/audit/15_check_september_changes.sql` once if you want proof that production
+matches them (no rows = it does). On any other database they build the same objects.
+
 ## 2. Check it (read only)
 
 Run `supabase/audit/04_postflight_website_migrations.sql` in the same SQL editor. The first row must say `OK`. Anything marked `STOP`
