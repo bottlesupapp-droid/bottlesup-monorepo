@@ -326,7 +326,7 @@ Use two phones or a phone and the website where noted. Demo night (16 to 18 Oct)
 
 ## Next steps for Claude, in order (rewritten 18 Oct; the old 14 Oct list is gone)
 
-State: website `feat/vendor-ops-modules` (head `14d27b2`, PR #6) and vendor `feat/ops-modules` (head `a06e77a`, PR #18) are pushed; the 11 migrations are LIVE in production; the 1.2.0+7 builds exist but are not uploaded; nobody has used the new features yet. Check these heads with git before relying on them.
+State: website `feat/vendor-ops-modules` (head `9157bff`, PR #6) and vendor `feat/ops-modules` (head `a06e77a`, PR #18) are pushed; the 11 migrations are LIVE in production; the 1.2.0+7 builds exist but are not uploaded; nobody has used the new features yet. Check these heads with git before relying on them.
 1. Wait for the user's report from TEST CHECKLIST 2 and fix what they find (a database fix is a new migration, never an edit to an applied file; the app fix goes on `feat/ops-modules`).
 2. Schedule the chat clean-up: `chat_purge_expired()` is service-role only and nothing calls it (no pg_cron); an edge function on a schedule, or ask the user to enable pg_cron.
 3. Build the outbox sender (an edge function that reads `site_outbox` rows with status `queued` and sets `sent` / `failed`) once the user picks an e-mail/SMS provider; until then every guest message says "Queued, not sent yet".
