@@ -91,6 +91,17 @@ production on 23 and 25 Sep, which is why production's `checkin_ticket()` differ
 and changes nothing, but there is no reason to run them: skip them, and run the read-only `supabase/audit/15_check_september_changes.sql` once if you want proof that production
 matches them (no rows = it does). On any other database they build the same objects.
 
+### 1f. Optional, when you decide: send the queued guest e-mails (website PR #8)
+
+Until this is done every guest message in the vendor app (table seated, wait estimate, VIP invitation) says "Queued, not sent yet", and expired chats are never deleted.
+Nothing here is automatic; each step is yours:
+
+1. Have the client read the e-mail wording in `apps/bottles-up-website-main/supabase/functions/_shared/outbox.ts` (a first draft). Messages older than 12 hours are never sent.
+2. Apply `20261019100000_outbox_claim.sql` (adds one column and two functions; undo: `supabase/go-live/rollback_outbox_claim.sql`), the same way as the other migrations (`supabase/go-live/apply_one.sh`).
+3. Deploy the function: `supabase functions deploy process-outbox --use-api`. It uses the `RESEND_API_KEY` the other e-mail functions already use (and `OUTBOX_FROM_EMAIL` if you want a different sender than `tickets@bottlesupapp.com`). With no key it sends nothing and loses nothing.
+4. Add a schedule that calls it every 5 minutes with the **service role key** as the bearer token (Supabase dashboard > Integrations > Cron, job type "Supabase Edge Function", or `pg_cron` + `pg_net` with the key kept in Vault). The function refuses any other caller. The key never goes in this repository.
+5. Check: queue a test message by seating a demo booking (or `vip_invite` for a VIP with your own e-mail), wait for the schedule, and see the message turn "Sent" in the app and arrive in your inbox.
+
 ## 2. Check it (read only)
 
 Run `supabase/audit/04_postflight_website_migrations.sql` in the same SQL editor. The first row must say `OK`. Anything marked `STOP`
