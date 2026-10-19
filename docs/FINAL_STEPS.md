@@ -32,6 +32,10 @@ Built on 19 Oct from the stack head (`bc810e1`, byte-for-byte the code that land
 
 Uploading needs your accounts: drag the `.ipa` into Transporter and deliver, then add testers in TestFlight; upload the `.aab` in Play Console > internal testing. If you merge #23 first and want builds made from `main` instead, say so and I will rebuild (same commands: `flutter build appbundle --release`, `flutter build apk --release`, `flutter build ipa --release`). The app copes with any of the new database functions being absent, so it can go out before or after step 2.
 
+## 4b. Give the test login its roles (one paste, 1 minute)
+
+`bottlesupapp@gmail.com` exists and has signed in, but has **no role**, so the app would show "You do not have a workspace yet". Paste `supabase/go-live/test_login_roles.sql` into the production SQL editor: it makes that login **owner of Active Lounge** (the club that already holds the test staff) plus **door** and **server** at that venue, so the workspace picker lets one login try all three sides. The last query lists what it gave; running it twice adds nothing; the undo block at the bottom revokes the three roles. No organizer role is included (the organizer businesses are other people's); ask for a separate test organizer if you want that side. Claude could not run it itself (the permission layer blocks granting access in production).
+
 ## 5. Check it on a real phone (the brief's acceptance demonstration, section 35)
 
 Use the demo club and a test booking (the demo night can be loaded with `supabase/go-live/demo_night.sql`; remove it afterwards with `demo_night_cleanup.sql`; both only on your say-so). What the app can show today, step by step:
