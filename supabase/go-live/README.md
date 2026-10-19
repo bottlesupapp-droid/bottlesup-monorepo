@@ -102,6 +102,8 @@ Nothing here is automatic; each step is yours:
 4. Add a schedule that calls it every 5 minutes with the **service role key** as the bearer token (Supabase dashboard > Integrations > Cron, job type "Supabase Edge Function", or `pg_cron` + `pg_net` with the key kept in Vault). The function refuses any other caller. The key never goes in this repository.
 5. Check: queue a test message by seating a demo booking (or `vip_invite` for a VIP with your own e-mail), wait for the schedule, and see the message turn "Sent" in the app and arrive in your inbox.
 
+> **Shortcut (19 Oct):** `supabase/go-live/apply_pending_migrations.sql` is sections 1f step 2 and 1g steps 2 to 7 in ONE paste (the nine files, byte-identical, each in its own transaction, in order). Pre-flight 16 and post-flight 17 still apply.
+
 ### 1g. Eight more migrations for the 15 Oct brief (website PR #10, branch `feat/business-brief-2`; apply AFTER the outbox migration in 1f)
 
 Everything here is additive except one replaced function (`invite_member`, see 4) and one added column on a busy table (`site_table_booking_bottles.delivered_quantity`, see 6). The door scan functions that are live today are NOT touched (see 7). None of them changes an existing row. Run them one at a time with `apply_one.sh`, in this order, and stop at the first failure (each file runs in its own transaction, so a failure leaves nothing half-done):

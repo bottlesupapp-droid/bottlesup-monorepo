@@ -6,62 +6,43 @@ while preparing it.** Each step says what it does, how to check it, and how to u
 
 Rule for Claude sessions reading this: do none of these without the user's explicit yes for that step.
 
-## 0. Two answers I still need from you (2 minutes)
+## Where things stand (19 Oct, evening)
 
-1. **Test login `bottlesupapp@gmail.com`: access to both apps.** I cannot create accounts or set passwords. Tell me which role(s) you want that
-   account to have (owner / manager / server / door / several), and for which club (the demo club "Active Lounge" is the only one set up for a walk-through), and say
-   "yes, grant it". I will then run one read-only look and one targeted write through your Supabase CLI login, as on 16 and 18 Oct. Alternative: send that one person an invitation from
-   More > Team in the app (owner) and accept it with that e-mail: no database work at all.
-2. **XNO's booking window.** The club XNO accepts bookings only until 26 Sep 2026 (`booking_end_date`). Extending it to 31 Dec 2026 is a production write; say "extend XNO" and I will do exactly
-   that one change. Until then guests cannot book XNO tables online.
+* **Done by Claude:** all code, tests and documents; the **production pre-flight audit was run read-only through the Supabase connector and came back with no rows** (no new name exists, every prerequisite is there, `invite_member` is exactly the expected version), so the migrations are safe to apply as they are.
+* **Blocked for Claude, so they are yours:** merging into `main` (the permission layer refuses "Merge Without Review") and every write to production (refused as "Production Deploy"), through the connector too. The Supabase CLI on this Mac is signed in to a different Supabase account (it lists only the `sabalive` projects), so it cannot reach production either. Two ways forward: do steps 1 and 2 yourself (about 20 minutes), or add permission rules for `gh pr merge` and for the Supabase connector's `execute_sql` / `deploy_edge_function` in the Claude Code settings and tell me to continue.
+* **Already merged by someone before this list was finished:** the vendor stack was merged bottom-up into its intermediate branches, so vendor `main` only got #13, #16 and #22; website #2 is merged and #3 was closed by a branch deletion. That is why step 1 is now three single pull requests (the whole stack already sits, in order, on the top branches).
+* **Not wanted:** extending XNO's booking window (you said no need).
 
-## 1. Merge the pull requests (about 15 minutes)
+## 1. Merge three pull requests (2 minutes)
 
-Each repo is a **stack**: every pull request sits on top of the one below it. Merge from the bottom, and **tick "Delete branch"** each time, so GitHub moves the next
-pull request onto `main` by itself. Before you click Merge, look at the line under the title: it must say `into main`. If it still names another branch, wait a minute
-and reload, or stop and tell me.
+Each is one pull request from the top of a stack, with every piece already in it, CI passing, and a clean trial merge into `main`:
 
-`docs/merge_stack.sh` does exactly this for you with the GitHub CLI (it prints the plan first, asks you to type `merge`, checks the base of each pull request, and stops at
-the first problem): `bash docs/merge_stack.sh website` then `bash docs/merge_stack.sh vendor`. You can also click through by hand:
-
-| Repo | Order |
-|---|---|
-| **website** (`KDR9MGR/bottles-up-website`) | #2, #3, #4, #5, #6, then #7, #8, #9, then #10 |
-| **vendor app** (`bottlesupapp-droid/bottles-up-vendor`) | #16 (CI), #13, #14, #15, #17, #18, #19, #20, then #21 |
-
-Before the website merges I checked on a scratch merge that #9 (e-mail wording) and #10 (everything else) combine without conflicts and that the unit tests pass together.
-Merging changes nothing in production by itself: the website `main` redeploys on Vercel (see 3), the database is untouched until step 2.
-
-Then tell me, and I will move the monorepo's pointers for `apps/bottles-up-vendor` and `apps/bottles-up-website-main` (they are deliberately not committed while the
-branches are unmerged) and merge the monorepo branch `chore/audit-and-staging` if you want it.
-
-## 2. Apply the database changes to production (30 to 45 minutes, at a quiet time)
-
-Never `supabase db push` (production's migration history stops at 20260925080444). Use the SQL editor, one file at a time, in the order below, exactly as in
-`supabase/go-live/README.md` (sections 1f and 1g). Every file is in `apps/bottles-up-website-main/supabase/migrations/` after step 1. Or tell me "apply them" and I will do it
-through your CLI login, one file per transaction, with a check after each (the method used on 16 and 18 Oct).
-
-| # | File | Adds |
+| Repo | Pull request | Merge when |
 |---|---|---|
-| 1 | `20261019100000_outbox_claim` | the claim/finish functions for the e-mail sender (optional; only needed with step 3's `process-outbox`) |
-| 2 | `20261020100000_venue_payment_rules` | owner's bottle-payment setting |
-| 3 | `20261020110000_booking_guests_and_activity` | a table page's Guests and Activity tabs |
-| 4 | `20261020120000_org_event_states` | where each organizer event stands |
-| 5 | `20261020130000_organizer_door_staff` | one column, six functions, and REPLACES `invite_member` (guarded: stops with nothing changed if the live function is not the expected one) |
-| 6 | `20261020140000_desk_walkin` | walk-in booking |
-| 7 | `20261020150000_add_bottles_checks` | who may add bottles to a table, and the bottle menu |
-| 8 | `20261020160000_partial_delivery` | one column on the bottle lines and the partial-delivery functions |
-| 9 | `20261020170000_group_admission` | one closed table and three functions for group admission at the door (the live scan functions are not touched) |
+| vendor app | [#23](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/23) `feat/business-brief-1` into `main` (the whole stack, version 1.3.0+8) | first |
+| website | [#11](https://github.com/KDR9MGR/bottles-up-website/pull/11) `feat/business-brief-2` into `main` (organizer events, server desk, Phase 2 modules, September record, outbox sender, tranche 2) | second |
+| website | [#9](https://github.com/KDR9MGR/bottles-up-website/pull/9) `feat/business-naming` into `main` (e-mails say BottlesUp Business) | after #11 |
 
-* **Before:** run `supabase/audit/16_preflight_business_brief_2.sql`. It must return **no rows**. (Rows mean a name is taken or something earlier is missing: send me the result.)
-* **After each file:** it must say success. If one stops with a message, do not edit it: send me the message.
-* **After all:** run `supabase/audit/17_postflight_business_brief_2.sql`: every row `ok = true`.
-* **Undo:** `supabase/go-live/rollback_business_brief_2.sql` for files 2 to 9, `supabase/go-live/rollback_outbox_claim.sql` for file 1. Both tested on a scratch copy.
-* The two September files (`20260923100000`, `20260925100000`) are **not** applied: they are already live (see 1e). Optional proof: `supabase/audit/15_check_september_changes.sql` returns no rows.
+In the browser: Merge pull request, **Create a merge commit**, and do NOT tick "Delete branch". Or in a terminal: `bash docs/merge_landing_prs.sh` (shows the plan, asks you to type `merge`). Afterwards close website #4, #5, #6, #7, #8 and #10: they are the old stacked pieces and are fully contained in #11 (#3 is already closed).
+
+Merging the website redeploys it on Vercel (the new organizer and cancel-business screens, one team screen wording) and changes nothing in production's database.
+
+Then tell me, and I will move the monorepo's pointers for `apps/bottles-up-vendor` and `apps/bottles-up-website-main` and open the monorepo pull request for `chore/audit-and-staging` (it only holds documents, audits and scripts).
+
+## 2. Apply the database changes to production (about 10 minutes)
+
+**One paste:** `supabase/go-live/apply_pending_migrations.sql` holds all nine pending migrations (the outbox claim plus the eight tranche-2 ones), byte-identical to the migration files, each in its own begin/commit, in the right order; an error rolls back that migration and stops the rest. Tested on the scratch database: after the undo scripts it applied cleanly and the post-flight was all true.
+
+1. Supabase dashboard > the production project > SQL editor. (Optional but done already on 19 Oct: run `supabase/audit/16_preflight_business_brief_2.sql`, it must return no rows.)
+2. `pbcopy < supabase/go-live/apply_pending_migrations.sql` (macOS), paste, Run. It must finish with no error.
+3. Run `supabase/audit/17_postflight_business_brief_2.sql`: every row `ok = true`.
+4. Undo, if ever needed: `supabase/go-live/rollback_business_brief_2.sql` (the eight tranche-2 files), `supabase/go-live/rollback_outbox_claim.sql` (the outbox file). Both tested.
+
+If a file stops with a message, do not edit it: send me the message. Never `supabase db push` (production's migration history stops at 20260925080444). The two September files (`20260923100000`, `20260925100000`) are **not** applied: they are already live (`supabase/audit/15_check_september_changes.sql` returns no rows). The old per-file list is in `supabase/go-live/README.md` sections 1f and 1g.
 
 ## 3. Deploy the functions and the website
 
-From `apps/bottles-up-website-main` after step 1 (no Docker needed with `--use-api`):
+From `apps/bottles-up-website-main` after step 1 (no Docker needed with `--use-api`). **The Supabase CLI on this Mac is currently signed in to another Supabase account**: run `supabase login` with the account that owns the production project first (`supabase projects list` must show `hwmynlghrmtoufyrcihp`):
 
 ```bash
 supabase functions deploy add-table-booking-bottles --project-ref hwmynlghrmtoufyrcihp --use-api   # now lets a server or manager add bottles at the table
