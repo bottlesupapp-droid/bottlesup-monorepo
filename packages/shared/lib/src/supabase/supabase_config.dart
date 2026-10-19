@@ -9,9 +9,19 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// - User app initializes Supabase itself in main.dart via --dart-define,
 ///   then uses [SupabaseConfig.client] / [SupabaseConfig.auth] to access the instance.
 class SupabaseConfig {
-  static const String url = 'https://hwmynlghrmtoufyrcihp.supabase.co';
-  static const String anonKey =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh3bXlubGdocm10b3VmeXJjaWhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE2Mzc3ODAsImV4cCI6MjA2NzIxMzc4MH0.1VpevdV-ReX7w3QCoM0xaPjSywusUtrbrtFk9AsWNAw';
+  // Point a build at another project (e.g. STAGING) with
+  //   --dart-define=SUPABASE_URL=https://<ref>.supabase.co
+  //   --dart-define=SUPABASE_ANON_KEY=<anon key>
+  // With no defines the production values below are used, exactly as before.
+  static const String url = String.fromEnvironment(
+    'SUPABASE_URL',
+    defaultValue: 'https://hwmynlghrmtoufyrcihp.supabase.co',
+  );
+  static const String anonKey = String.fromEnvironment(
+    'SUPABASE_ANON_KEY',
+    defaultValue:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh3bXlubGdocm10b3VmeXJjaWhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE2Mzc3ODAsImV4cCI6MjA2NzIxMzc4MH0.1VpevdV-ReX7w3QCoM0xaPjSywusUtrbrtFk9AsWNAw',
+  );
 
   /// Used by the vendor app to initialize Supabase.
   /// The user app initializes Supabase in its own main.dart using --dart-define.
