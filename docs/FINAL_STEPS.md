@@ -6,55 +6,19 @@ while preparing it.** Each step says what it does, how to check it, and how to u
 
 Rule for Claude sessions reading this: do none of these without the user's explicit yes for that step.
 
-## Where things stand (19 Oct, evening)
+## Where things stand (19 Oct, night): steps 1, 2 and 3 are DONE and validated
 
-* **Done by Claude:** all code, tests and documents; the **production pre-flight audit was run read-only through the Supabase connector and came back with no rows** (no new name exists, every prerequisite is there, `invite_member` is exactly the expected version), so the migrations are safe to apply as they are.
-* **Blocked for Claude, so they are yours:** merging into `main` (the permission layer refuses "Merge Without Review") and every write to production (refused as "Production Deploy"), through the connector too. The Supabase CLI on this Mac is signed in to a different Supabase account (it lists only the `sabalive` projects), so it cannot reach production either. Two ways forward: do steps 1 and 2 yourself (about 20 minutes), or add permission rules for `gh pr merge` and for the Supabase connector's `execute_sql` / `deploy_edge_function` in the Claude Code settings and tell me to continue.
-* **Already merged by someone before this list was finished:** the vendor stack was merged bottom-up into its intermediate branches, so vendor `main` only got #13, #16 and #22; website #2 is merged and #3 was closed by a branch deletion. That is why step 1 is now three single pull requests (the whole stack already sits, in order, on the top branches).
+* **Merged (by you, 13:34 to 13:42 UTC) and checked by Claude:** vendor `main` contains the whole stack (its only file difference from the stack head is the CI workflow it keeps), version 1.3.0+8; website `main` contains #2, the whole stack (#11), the e-mail wording (#9) and the September record (#12), and all nine migration files. Left over and harmless: website #7 (old stacked piece, contained in #11), website #3 (closed), website #4 to #6, #8, #10 show as merged.
+* **Migrations applied to production (by you) and validated read-only by Claude through the Supabase connector:** post-flight 17 all 12 rows true; **all 29 functions (the 20 new ones, `outbox_claim`/`outbox_finish`, `invite_member`, and neighbours) are byte-for-byte identical to the committed files** (fingerprint of the normalized body, security flags, search_path and return type compared with a replay on the scratch database), grants exactly as designed (visitors none; signed-in people yes, except `event_door_allowed`, `outbox_claim`, `outbox_finish`); the live `door_scan_ticket`, `door_verify_ticket_code` and `desk_set_service_status` are unchanged and equal the repository; `site_order_admissions` has row level security, no policies, no access for signed-in people or visitors, 0 rows; `delivered_quantity` is `integer not null default 0` with a non-negative check and no line has a non-zero count; `organizer_door_staff` is `boolean not null default false` and no club has it on; `site_outbox.claimed_at` exists and the outbox is empty; the `scan_attempts` result constraint is untouched; the Phase 2 post-flight (audit 13: 83 functions, 22 tables, RLS, grants, search_path) still passes; the Supabase security advisor mentions the new objects only as "RLS enabled, no policy" on the closed admissions table and "signed-in users can execute a security definer function" on the new functions, both by design (each checks the caller inside, and the tests prove it). Pre-existing advisor items (exposed `auth.users` view, a security-definer view, leaked-password protection off, a Postgres version notice, functions in `public`) are not from this work.
+* **Functions deployed (step 3) by Claude through the CLI once you had logged in to the right account:** `add-table-booking-bottles` v9 (JWT check kept off as it was; first confirmed that the live version was just an older revision of the repository code with no hand edits), `send-team-invitation` v4, `process-outbox` v1 (new, **not scheduled**). Smoke-tested without credentials: the first two answer 401 "Unauthorized" from their own code (so the new code boots), `process-outbox` answers 401 and sends nothing.
+* **Still blocked for Claude (permission layer):** merging into `main` and every write to production, so the remaining steps below are yours, or add permission rules for `gh pr merge` and the Supabase connector's `execute_sql` / `deploy_edge_function`.
 * **Not wanted:** extending XNO's booking window (you said no need).
 
-## 1. Merge three pull requests (2 minutes)
+## 3. Functions and website: DONE (nothing left except the optional guest e-mails)
 
-Each is one pull request from the top of a stack, with every piece already in it, CI passing, and a clean trial merge into `main`:
+Deployed on 19 Oct (see "Where things stand"); the website redeployed on Vercel when #11 and #9 merged.
 
-| Repo | Pull request | Merge when |
-|---|---|---|
-| vendor app | [#23](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/23) `feat/business-brief-1` into `main` (the whole stack, version 1.3.0+8) | first |
-| website | [#11](https://github.com/KDR9MGR/bottles-up-website/pull/11) `feat/business-brief-2` into `main` (organizer events, server desk, Phase 2 modules, September record, outbox sender, tranche 2) | second |
-| website | [#9](https://github.com/KDR9MGR/bottles-up-website/pull/9) `feat/business-naming` into `main` (e-mails say BottlesUp Business) | after #11 |
-
-In the browser: Merge pull request, **Create a merge commit**, and do NOT tick "Delete branch". Or in a terminal: `bash docs/merge_landing_prs.sh` (shows the plan, asks you to type `merge`). Afterwards close website #4, #5, #6, #7, #8 and #10: they are the old stacked pieces and are fully contained in #11 (#3 is already closed).
-
-Merging the website redeploys it on Vercel (the new organizer and cancel-business screens, one team screen wording) and changes nothing in production's database.
-
-Then tell me, and I will move the monorepo's pointers for `apps/bottles-up-vendor` and `apps/bottles-up-website-main` and open the monorepo pull request for `chore/audit-and-staging` (it only holds documents, audits and scripts).
-
-## 2. Apply the database changes to production (about 10 minutes)
-
-**One paste:** `supabase/go-live/apply_pending_migrations.sql` holds all nine pending migrations (the outbox claim plus the eight tranche-2 ones), byte-identical to the migration files, each in its own begin/commit, in the right order; an error rolls back that migration and stops the rest. Tested on the scratch database: after the undo scripts it applied cleanly and the post-flight was all true.
-
-1. Supabase dashboard > the production project > SQL editor. (Optional but done already on 19 Oct: run `supabase/audit/16_preflight_business_brief_2.sql`, it must return no rows.)
-2. `pbcopy < supabase/go-live/apply_pending_migrations.sql` (macOS), paste, Run. It must finish with no error.
-3. Run `supabase/audit/17_postflight_business_brief_2.sql`: every row `ok = true`.
-4. Undo, if ever needed: `supabase/go-live/rollback_business_brief_2.sql` (the eight tranche-2 files), `supabase/go-live/rollback_outbox_claim.sql` (the outbox file). Both tested.
-
-If a file stops with a message, do not edit it: send me the message. Never `supabase db push` (production's migration history stops at 20260925080444). The two September files (`20260923100000`, `20260925100000`) are **not** applied: they are already live (`supabase/audit/15_check_september_changes.sql` returns no rows). The old per-file list is in `supabase/go-live/README.md` sections 1f and 1g.
-
-## 3. Deploy the functions and the website
-
-From `apps/bottles-up-website-main` after step 1 (no Docker needed with `--use-api`). **The Supabase CLI on this Mac is currently signed in to another Supabase account**: run `supabase login` with the account that owns the production project first (`supabase projects list` must show `hwmynlghrmtoufyrcihp`):
-
-```bash
-supabase functions deploy add-table-booking-bottles --project-ref hwmynlghrmtoufyrcihp --use-api   # now lets a server or manager add bottles at the table
-supabase functions deploy send-team-invitation        --project-ref hwmynlghrmtoufyrcihp --use-api   # invitation e-mail now says BottlesUp Business
-supabase functions deploy process-outbox              --project-ref hwmynlghrmtoufyrcihp --use-api   # optional: sends the queued guest e-mails
-```
-
-* `add-table-booking-bottles` and `send-team-invitation` replace what is deployed with what is in the repository. If anyone ever edited either in the Supabase dashboard,
-  tell me first so nothing is lost. `process-outbox` is new.
-* **Switching on the guest e-mails** (optional, your call): the client reads the wording in `supabase/functions/_shared/outbox.ts`, then add a 5-minute schedule that calls
-  `process-outbox` with the service role key as the bearer (README 1f). Until then every guest message stays "Queued, not sent yet" in the app, which is honest.
-* **Website:** merging step 1 redeploys the site on Vercel (one team screen says BottlesUp Business now). Nothing else to do.
+* **Switching on the guest e-mails** (optional, your call, deliberately NOT done): the client reads the wording in `supabase/functions/_shared/outbox.ts`, then add a 5-minute schedule that calls `process-outbox` with the service role key as the bearer (`supabase/go-live/README.md` 1f step 4). Until then every guest message stays "Queued, not sent yet" in the app, which is honest, and `process-outbox` does nothing when called by anyone else.
 
 ## 4. Upload the vendor app (the builds are made)
 
