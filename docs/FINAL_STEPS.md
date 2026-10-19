@@ -56,19 +56,17 @@ supabase functions deploy process-outbox              --project-ref hwmynlghrmto
   `process-outbox` with the service role key as the bearer (README 1f). Until then every guest message stays "Queued, not sent yet" in the app, which is honest.
 * **Website:** merging step 1 redeploys the site on Vercel (one team screen says BottlesUp Business now). Nothing else to do.
 
-## 4. Build and upload the vendor app
+## 4. Upload the vendor app (the builds are made)
 
-The app is version **1.3.0 (build 8)** on `feat/business-brief-2` (it becomes `main` after step 1). Builds point at production by default.
+Built on 19 Oct from the stack head (`bc810e1`, byte-for-byte the code that lands on `main` with #23), version **1.3.0 (build 8)**, pointing at production:
 
-```bash
-cd apps/bottles-up-vendor
-flutter pub get
-flutter build appbundle --release      # Android: build/app/outputs/bundle/release/app-release.aab -> Play Console, internal testing
-flutter build ipa --release            # iOS: build/ios/ipa/*.ipa -> Transporter -> App Store Connect / TestFlight
-```
+| | File (under `apps/bottles-up-vendor/`) | Checked |
+|---|---|---|
+| Android bundle (Play Console, internal testing) | `build/app/outputs/bundle/release/app-release.aab` (61.2 MB) | `com.bottlesup.vendor`, same upload key as before (SHA-256 `32:CE:D8:0E:...:08:F4`), jar verified |
+| Android APK (install directly on a phone) | `build/app/outputs/flutter-apk/app-release.apk` (89.1 MB) | versionCode 8, versionName 1.3.0, target SDK 36 |
+| iOS (Transporter, then TestFlight) | `build/ios/ipa/BottlesUp Business.ipa` (26.3 MB; ignore the old `Vendor.ipa` of 17 Oct) | `com..bottlesUp.ORG`, 1.3.0 build 8, Apple Distribution team `4T453RG45S`, App Store profile (get-task-allow false) |
 
-Signing is as before (upload key in `~/bottlesup-secrets/android/`, Apple team `4T453RG45S`). If you would rather I build them, say so after step 1 and I will build from `main`
-and check the signatures and version numbers as on 18 Oct. Tell me about any build problem and I will fix it.
+Uploading needs your accounts: drag the `.ipa` into Transporter and deliver, then add testers in TestFlight; upload the `.aab` in Play Console > internal testing. If you merge #23 first and want builds made from `main` instead, say so and I will rebuild (same commands: `flutter build appbundle --release`, `flutter build apk --release`, `flutter build ipa --release`). The app copes with any of the new database functions being absent, so it can go out before or after step 2.
 
 ## 5. Check it on a real phone (the brief's acceptance demonstration, section 35)
 
