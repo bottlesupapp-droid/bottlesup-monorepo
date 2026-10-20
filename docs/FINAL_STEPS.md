@@ -1,6 +1,6 @@
 # FINAL STEPS: what is left for you (everything else is built, tested and pushed)
 
-Written 19 Oct 2026. This is the one list to work through, top to bottom, when you are ready. Everything that could be done without you is done: code, database
+Written 19 Oct 2026, extended 21 Oct 2026 with section 2b (the third batch of the brief: floor plan and tables, refunds, discounts, payouts). This is the one list to work through, top to bottom, when you are ready. Everything that could be done without you is done: code, database
 migrations with their tests, rollbacks, read-only audit scripts, documentation. **Nothing below has been done to production, and nothing in production was touched
 while preparing it.** Each step says what it does, how to check it, and how to undo it.
 
@@ -13,6 +13,21 @@ Rule for Claude sessions reading this: do none of these without the user's expli
 * **Functions deployed (step 3) by Claude through the CLI once you had logged in to the right account:** `add-table-booking-bottles` v9 (JWT check kept off as it was; first confirmed that the live version was just an older revision of the repository code with no hand edits), `send-team-invitation` v4, `process-outbox` v1 (new, **not scheduled**). Smoke-tested without credentials: the first two answer 401 "Unauthorized" from their own code (so the new code boots), `process-outbox` answers 401 and sends nothing.
 * **Still blocked for Claude (permission layer):** merging into `main` and every write to production, so the remaining steps below are yours, or add permission rules for `gh pr merge` and the Supabase connector's `execute_sql` / `deploy_edge_function`.
 * **Not wanted:** extending XNO's booking window (you said no need).
+
+## 2b. NEW (built 20 to 21 Oct): the third batch, five migrations, eleven functions, two pull requests
+
+Everything the client answered on 20 Oct and the owner decided afterwards (payouts, BottlesUp's percentage and weekday set in the CMS; refund deadlines and amounts set by each venue and watched in the CMS; discount limits set by the owner; floor map, included admissions and deposit terms "similar to the website") is built on both sides and tested. **Nothing is merged, applied or deployed.** Do these in order:
+
+1. **Open and merge two pull requests.** Both branches are pushed (`feat/business-brief-3` in the website and the vendor repo). Claude could not open the pull requests (the permission layer refused `gh pr create`), so open them from the links in `docs/pr_descriptions_batch3.md`, which also has the text to paste. Merge the website one first, then the vendor one. Neither needs anything else first (`main` already has the earlier batches). Do not delete the branches on merge.
+2. **Check the generated files are current:** `python3 -I supabase/go-live/build_business_brief_3.py --check` must say "both files are current".
+3. **Pre-flight:** paste `supabase/audit/18_preflight_business_brief_3.sql` into the production SQL editor. **It must return no rows.** Any row: stop and send it to me.
+4. **Apply:** paste **`supabase/go-live/apply_business_brief_3.sql`** (one paste, about 3,000 lines, the five migrations in order, each in its own begin/commit). Two of them replace live functions (3 and 4) and are guarded: if production's version is not exactly the expected one that migration stops by itself and changes nothing. Tested on a scratch copy of production's shape: it applied cleanly in one run, the rollback undid it completely, and it applied again.
+5. **Post-flight:** paste `supabase/audit/19_postflight_business_brief_3.sql`: **all 16 rows must say ok = true.**
+6. **Deploy the functions** (commands in `supabase/go-live/README.md` section 1h): `create-table-booking-checkout`, `create-walkin-table-booking`, `cancel-table-booking`, `refund-table-booking-payment` (changed code), and `add-table-booking-bottles`, `cancel-bottle-line`, `confirm-bottle-addon`, `order-bottles-by-code`, `respond-bottle-substitution`, `site-booking-status`, `site-stripe-webhook` (they share the total calculation, which now subtracts a staff discount). Database first, functions second.
+7. **In the CMS (Payouts > Settings):** choose the payout weekday, how many days money waits, and **BottlesUp's percentage**. Nothing is invented: until you choose, venues are told it is not set. Then set each business's payout account status once you have checked its bank details yourself (the app collects none).
+8. **Undo, if ever needed:** `supabase/go-live/rollback_business_brief_3.sql`. It refuses while any bottle line is "accepted", a refund is approved or paid back, or a payout is being sent or paid (records of money). After it, redeploy the earlier function versions (README 1h step 8).
+
+The vendor app behaves safely with the database not updated yet (each new screen says "not set up on this server yet").
 
 ## 3. Functions and website: DONE (nothing left except the optional guest e-mails)
 
@@ -30,7 +45,7 @@ Built on 19 Oct from the stack head (`bc810e1`, byte-for-byte the code that land
 | Android APK (install directly on a phone) | `build/app/outputs/flutter-apk/app-release.apk` (89.1 MB) | versionCode 8, versionName 1.3.0, target SDK 36 |
 | iOS (Transporter, then TestFlight) | `build/ios/ipa/BottlesUp Business.ipa` (26.3 MB; ignore the old `Vendor.ipa` of 17 Oct) | `com..bottlesUp.ORG`, 1.3.0 build 8, Apple Distribution team `4T453RG45S`, App Store profile (get-task-allow false) |
 
-Uploading needs your accounts: drag the `.ipa` into Transporter and deliver, then add testers in TestFlight; upload the `.aab` in Play Console > internal testing. If you merge #23 first and want builds made from `main` instead, say so and I will rebuild (same commands: `flutter build appbundle --release`, `flutter build apk --release`, `flutter build ipa --release`). The app copes with any of the new database functions being absent, so it can go out before or after step 2.
+**These builds do NOT contain the third batch (section 2b)**: no new build was made, as you asked. When you want one with it, say so (it will be version 1.4.0, build 10, from `feat/business-brief-3` after it is merged). Uploading needs your accounts: drag the `.ipa` into Transporter and deliver, then add testers in TestFlight; upload the `.aab` in Play Console > internal testing. If you merge #23 first and want builds made from `main` instead, say so and I will rebuild (same commands: `flutter build appbundle --release`, `flutter build apk --release`, `flutter build ipa --release`). The app copes with any of the new database functions being absent, so it can go out before or after step 2.
 
 ## 4b. Give the test login its roles (one paste, 1 minute)
 
@@ -57,14 +72,18 @@ Use the demo club and a test booking (the demo night can be loaded with `supabas
 | 13 | Review the organizer allocation and remaining settlement | **Not built** (settlements wait for the client, see 6). |
 | 14 | Preliminary and final end-of-night report with matching figures | Yes: Tonight > Prepare and close the night; the PDF. |
 | 15 | Unauthorized staff cannot reach another venue's records | Yes: checked by the database tests (a server sees only their tables, one club never sees another's). |
+| 16 | (batch 3) Place the club's tables on its floor plan | Yes: Setup > Rooms and floor plan > Place tables (drag, resize, Save); the same percentages the website's editor uses, so guests see them in the right place. |
+| 17 | (batch 3) See the night's tables as Available, Held, Booked, Occupied, Unavailable; hold one; take one out of use; reopen it | Yes: Tonight > Tables. A booked table can never be blocked; a held or blocked table cannot be bought on the website or at the door (one shared count). |
+| 18 | (batch 3) Move a booking to another table and see who moved it | Yes: the table's page > Terms > Move to another table; it shows in Activity too. The guest's amounts do not change. |
+| 19 | (batch 3) Set the refund policy, then ask for and decide a refund | Yes: Payment settings or More > Refunds > Refund policy; a booking's page > Cancel booking / Ask for a refund; More > Refunds > Decide. A card refund is returned by BottlesUp in the CMS (Refunds > Return through Stripe); one at the club is recorded with a reference. |
+| 20 | (batch 3) Staff give a discount and a free bottle; the owner's limits decide who approves | Yes: More > Discounts and free bottles (owner sets limits); the table's Orders tab (give); More > Discounts > Waiting (approve). Totals and stock follow. |
+| 21 | (batch 3) The owner sees payouts | Yes, read only: More > Settlements and payouts; the CMS page Payouts creates the items and records the transfer with its reference. |
 
 The older checklists in `HANDOFF.md` (TEST CHECKLIST and TEST CHECKLIST 2, items 1 to 67) still apply to everything built earlier.
 
-## 6. Decisions only the client can make (they unblock the rest of the brief)
+## 6. Decisions only the client can make (what is still open after the 20 Oct answers)
 
-Payout timing and account structure (20); supported card devices and Door Sales (26); fee formulas; refund and commission windows (28, 31); how long a hold or an
-invitation lasts (13, 24); how long ambassador chat is kept (28); discount stacking and approvals, complimentary bottle claim rules (21); the Event Lead role and the ambassador
-program (28); settlements and who owes whom (31). `docs/BRIEF_15OCT_GAP_ANALYSIS.md` lists each, section by section, with what exists and what is missing.
+Answered on 20 Oct and now built: payouts, refunds, discounts and free bottles, order stage Accepted, floor map, deposit terms, the 10-minute checkout hold, one booking system. Still waiting on the client: the **Event Lead** role and the ambassador program (including how Event Leads are paid); **Door Sales** details beyond "cash, the club's own card machine, online tickets"; how a **free bottle is claimed by someone who is not at a table**; **ticket discounts** for organizers; **settlements** of ticket earnings (who owes whom); the wording of the **guest e-mails** about a refund decision, and the rest of the e-mail sheet; the **legal text** (Terms, Privacy); push and SMS providers; a Sentry DSN or Firebase account if crash reporting is wanted; and a decision on the 15 old accounts to convert. `docs/BRIEF_15OCT_GAP_ANALYSIS.md` lists each, section by section, with what exists and what is missing.
 
 ## 7. If something goes wrong
 
