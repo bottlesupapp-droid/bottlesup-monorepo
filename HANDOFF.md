@@ -1,6 +1,6 @@
 # HANDOFF: read this first
 
-Last updated: 2026-10-19 (evening) by Claude (Sonnet 5.5). **If you are a Claude session picking this up:** read this file, then verify any fact you are about to
+Last updated: 2026-10-22 by Claude (Sonnet 5.5). **If you are a Claude session picking this up:** read this file, then verify any fact you are about to
 rely on with git (branch heads, whether a PR merged) because it can be stale. **When you finish a chunk of work, update this file**: replace
 stale lines, do not append history, keep it readable in a few minutes, commit it on the monorepo branch `chore/audit-and-staging` and push that
 branch (never push `main`). No secrets in this file.
@@ -59,6 +59,12 @@ decision taken: **the website's `site_*` schema and functions are the source of 
 - Owner screens built: Overview, My Venues (profile + editors for floor plans, tables, bottle menu, booking times), Tables & Bookings (read-only, a manager's Floor too),
   Booking Link + QR, Team. Door staff: Scan, Guests. Everything else in the workspace shell is a placeholder.
 - **September drift now recorded (19 Oct):** the two changes made by hand in production on 23 Sep (guest tickets, `checkin_ticket()` rewrite, `lookup_table_booking_for_checkin()`) and 25 Sep (after-midnight `get_unavailable_table_types()`) are committed as guarded migrations `20260923100000` / `20260925100000` on website branch `fix/record-september-db-changes` ([PR #7](https://github.com/KDR9MGR/bottles-up-website/pull/7), base `feat/vendor-ops-modules`): no-ops in production, they exist so fresh databases and CI match it. **Never apply them to production.** Read-only proof that production matches: `supabase/audit/15_check_september_changes.sql` (NOT yet run; run it only when the user asks).
+- **Account deletion for staff (22 Oct; migration written and tested, NOT applied anywhere):** the vendor app's in-app deletion (`delete-account` edge function = `DELETE FROM auth.users`) failed for anyone who ever
+  acted: 51 "who did this" columns (scan_attempts.scanned_by, site_orders.checked_in_by, audit_log.actor_id, site_organizations.created_by, ...) had no ON DELETE rule, and `site_invitations.membership_id` blocked EVERY invited
+  member (their membership cascades away). Website branch `fix/account-deletion-actor-fks` (off `main`): migration `20261029100000_account_deletion_actor_fks.sql` makes them nullable + ON DELETE SET NULL (records stay,
+  the person goes; `audit_log.actor_email` stays) and replaces 10 "person tied to a state" CHECKs by "old rule OR the same state with the person gone"; skips tables that do not exist yet (14 more come with `feat/business-brief-3`: re-run it after those are applied, it is safe to repeat).
+  Test `460_account_deletion_history.sql` + guard `migration_guard_account_deletion.sh` (mutation-checked); full suite 2975 assertions on main's schema, 3960 on brief-3's. Read-only check for production: `supabase/audit/18_account_deletion_blockers.sql` (52 rows before, none after).
+  Chosen without asking the user (they declined the question): nullable + SET NULL, not a placeholder "deleted user" account. Left as is: `audit_log.actor_email` and the e-mail on invitations the person accepted are still personal data (say so in the privacy policy).
 - **Blocked until `supabase db pull`:** bottle orders, money actually collected, cancellations, anything server/table-service (production has columns/functions no
   committed migration defines: `profiles`, `promo_codes`, 17 of 24 RPCs, per-line bottle service/payment state, `table_view`/`privacy_level`/`seating_type`/`amenities`/`policy_note`).
 

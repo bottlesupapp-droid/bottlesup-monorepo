@@ -20,6 +20,17 @@ Deployed on 19 Oct (see "Where things stand"); the website redeployed on Vercel 
 
 * **Switching on the guest e-mails** (optional, your call, deliberately NOT done): the client reads the wording in `supabase/functions/_shared/outbox.ts`, then add a 5-minute schedule that calls `process-outbox` with the service role key as the bearer (`supabase/go-live/README.md` 1f step 4). Until then every guest message stays "Queued, not sent yet" in the app, which is honest, and `process-outbox` does nothing when called by anyone else.
 
+## 3b. Let staff delete their own account (new 22 Oct, written and tested, NOT applied; needed for the App Store)
+
+Today "Delete account" in the vendor app fails ("Failed to delete account") for anyone who accepted an invitation, scanned a ticket, handled cash or created a business. The fix is one website migration on branch `fix/account-deletion-actor-fks` (pushed; no pull request is open yet, say the word or open one from that branch to `main`). Records stay; only the person is removed from them. No app rebuild and no function redeploy.
+
+1. Merge that branch into website `main` (your click on the pull request).
+2. Optional, read-only: run `supabase/audit/18_account_deletion_blockers.sql` on production. It lists every column that blocks a deletion (expect about 52 rows).
+3. Apply it with the same method as the other migrations: `WORKDIR=<linked scratch dir> supabase/go-live/apply_one.sh 20261029100000_account_deletion_actor_fks`. It stops with nothing changed if a rule it replaces was edited by hand in production, and it is safe to run again.
+4. Run `18_account_deletion_blockers.sql` again: it must return no rows. After the brief-3 migrations are applied later, run `apply_one.sh` for this same file once more (it fixes their 14 columns too) and re-check.
+5. Try it: delete a test door/manager account from the vendor app; the person's scans, payments and audit rows must still be there with no name on them.
+Undo: none needed (the change only lets deletions through). Tell the client: the audit log keeps the e-mail of whoever acted, and accepted invitations keep the invited e-mail address; the privacy policy should say so.
+
 ## 4. Upload the vendor app (the builds are made)
 
 Built on 19 Oct from the stack head (`bc810e1`, byte-for-byte the code that lands on `main` with #23), version **1.3.0 (build 8)**, pointing at production:
