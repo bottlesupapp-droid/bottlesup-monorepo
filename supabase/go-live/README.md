@@ -121,18 +121,18 @@ Everything here is additive except one replaced function (`invite_member`, see 4
 
 The vendor app (PR #21, `feat/business-brief-2`) copes with these functions not being there yet: each new screen or tab shows a plain sentence ("not set up on this server yet", or "could not be loaded" with Try again) and the rest of the app keeps working, so the app build may go out before or after the migrations.
 
-### 1h. Five more migrations (brief 3: floor plan, order stage Accepted, refunds, staff discounts, payouts) and the functions that go with them
+### 1h. Seven more migrations (brief 3: floor plan, order stage Accepted, refunds, staff discounts, payouts, door sales, venue time zone) and the functions that go with them
 
 These are the website branch `feat/business-brief-3` (stacked on `feat/business-brief-2`; merge that first, then this one). **Nothing in production changes until you paste the file below.**
-Two of the five migrations REPLACE live functions (the floor plan one 3, the Accepted one 4) and each replacement is guarded: it happens only if the live function is exactly the
+Two of the seven migrations REPLACE live functions (the floor plan one 3, the Accepted one 4) and each replacement is guarded: it happens only if the live function is exactly the
 version the repository has; anything else stops that migration before it changes anything.
 
 1. Make sure the file is current (it is generated from the migrations): `python3 -I supabase/go-live/build_business_brief_3.py --check` (it must say "both files are current").
 2. Run `supabase/audit/18_preflight_business_brief_3.sql` in the production SQL editor. **It must return no rows.** Any row is a reason to stop and send it to me (a name is taken, something
    it builds on is missing, or one of the seven live functions is not the version the change was written against).
-3. Paste **`supabase/go-live/apply_business_brief_3.sql`** (about 3,000 lines; the five migrations in order, each in its own begin/commit) into the SQL editor and Run. An error in one file rolls
-   back that file and stops the rest; send me the error text, do not edit anything. (On a scratch copy of production's shape it applied cleanly in one run. The file is about 186 KB; if the editor refuses so large a paste, paste the five migration files one after another instead, in the same order, each from `apps/bottles-up-website-main/supabase/migrations/`; they are the same bytes, and each one is all-or-nothing.)
-4. Run `supabase/audit/19_postflight_business_brief_3.sql`: **all 16 rows must say ok = true.**
+3. Paste **`supabase/go-live/apply_business_brief_3.sql`** (about 3,330 lines; the seven migrations in order, each in its own begin/commit) into the SQL editor and Run. An error in one file rolls
+   back that file and stops the rest; send me the error text, do not edit anything. (On a scratch copy of production's shape it applied cleanly in one run. The file is about 205 KB; if the editor refuses so large a paste, paste the seven migration files one after another instead, in the same order, each from `apps/bottles-up-website-main/supabase/migrations/`; they are the same bytes, and each one is all-or-nothing.)
+4. Run `supabase/audit/19_postflight_business_brief_3.sql`: **all 19 rows must say ok = true.**
 5. Then deploy the website functions that changed (from `apps/bottles-up-website-main`, logged in to the right Supabase account; the database must come first, because the new code calls the new
    functions; `bookingTotals` copes with the discount column being absent, `create-table-booking-checkout` and `create-walkin-table-booking` do not cope with the shared count being absent):
 
@@ -148,9 +148,9 @@ version the repository has; anything else stops that migration before it changes
 7. Then the BottlesUp team sets, in the CMS, the things only BottlesUp controls: **Payouts > Settings** (the weekday, how many days money waits, BottlesUp's percentage: nothing is invented, it stays "not set" until you choose),
    and each business's payout account status. Venue owners set their own refund policy and discount limits in the BottlesUp Business app.
 8. **Undo:** `supabase/go-live/rollback_business_brief_3.sql` (one transaction; also generated). It puts the seven replaced functions and the five-value status constraint back exactly (checked on the scratch copy: after
-   it, the pre-flight 18 returns no rows, so each restored function is byte-for-byte the previous version) and drops what the five files created. It **refuses, and changes nothing,** while any bottle line is "accepted",
-   a refund is approved or paid back, or a payout is being sent or paid (those are records of money). It deletes: table holds and the record of moves, deposit terms, the terms each booking was sold under,
-   refund policies and requests, discount limits and the record of discounts and free bottles, payout settings/accounts/items. Tables already discounted keep their lowered total; free bottles stay as ordinary lines.
+   it, the pre-flight 18 returns no rows, so each restored function is byte-for-byte the previous version) and drops what the seven files created. It **refuses, and changes nothing,** while any bottle line is "accepted",
+   a refund is approved or paid back, a payout is being sent or paid, or any ticket was sold at the door (those are records of money). It deletes: table holds and the record of moves, deposit terms, the terms each booking was sold under,
+   refund policies and requests, discount limits and the record of discounts and free bottles, payout settings/accounts/items, and (door sales) the columns that say how an order was sold (the orders themselves stay), and the time zones venues chose (they read as Toronto again). Tables already discounted keep their lowered total; free bottles stay as ordinary lines.
    After a rollback redeploy the previous edge functions (`git checkout <previous commit> -- supabase/functions`, then the loop above): the new ones call functions the rollback removes.
 
 The vendor app (branch `feat/business-brief-3`) copes with all of these functions being absent: each new screen says "not set up on this server yet" or "could not be loaded" with Try again, and the rest of the app keeps working.
