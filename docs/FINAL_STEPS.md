@@ -25,9 +25,9 @@ Deployed on 19 Oct (see "Where things stand"); the website redeployed on Vercel 
 Today "Delete account" in the vendor app fails ("Failed to delete account") for anyone who accepted an invitation, scanned a ticket, handled cash or created a business. The fix is one website migration on branch `fix/account-deletion-actor-fks` (merged as website PR #13). Records stay; only the person is removed from them. No app rebuild and no function redeploy.
 
 1. ~~Merge the website branch~~ DONE: you merged website PR #13 on 22 Oct (`main` = `951c069`).
-2. Optional, read-only: run `supabase/audit/18_account_deletion_blockers.sql` on production. It lists every column that blocks a deletion (expect about 52 rows).
-3. Apply it with the same method as the other migrations: `WORKDIR=<linked scratch dir> supabase/go-live/apply_one.sh 20261029100000_account_deletion_actor_fks`. It stops with nothing changed if a rule it replaces was edited by hand in production, and it is safe to run again.
-4. Run `18_account_deletion_blockers.sql` again: it must return no rows. After the brief-3 migrations are applied later, run `apply_one.sh` for this same file once more (it fixes their 14 columns too) and re-check.
+2. DONE 23 Oct: audit 18 on production showed 71 rows (66 covered by the migration, 5 production-only legacy columns it does not cover).
+3. DONE 23 Oct: applied `20261029100000_account_deletion_actor_fks` with `apply_one.sh` (one transaction, no error).
+4. DONE 23 Oct: audit 18 again: 5 rows left, all production-only: `admin_audit_log.admin_id` (an admin with audit rows still cannot be deleted), `conversations.created_by`, `event_rsvps.verified_by`, `vendor_onboarding_data.referrer_id`, `venues.manager_id`. They need a second small migration (say the word). The brief-3 tables are already in production and were fixed too, so no re-run is needed.
 5. Try it: delete a test door/manager account from the vendor app; the person's scans, payments and audit rows must still be there with no name on them.
 Undo: none needed (the change only lets deletions through). Tell the client: the audit log keeps the e-mail of whoever acted, and accepted invitations keep the invited e-mail address; the privacy policy should say so.
 
