@@ -34,5 +34,9 @@ are never handled by the app (guests pay on the website through the payment prov
 
 * **The legal privacy policy and terms** (the website's `/privacy-policy` page is what the app links to; the older in-app Terms of Service screen for classic vendor accounts is still generic text and needs the lawyer's wording).
 * **Retention periods and region:** the app states none. They are decided by BottlesUp (database and storage settings).
-* **Support contact details:** the classic vendor screens Contact Support and About still show `support@bottlesup.com` and a phone number `+1-800-BOTTLES (24/7)` that were typed in as placeholders; they need the real details (or removing).
+* **Support contact details:** the classic vendor screens Contact Support and About now show only what the BottlesUp team has published in the CMS (Content page: e-mail, phone, address, social pages); fill those in there.
 * **Apple privacy answers / Google Data safety form:** they can be filled in from the table above; say if you want a pre-filled draft of each.
+
+## The iOS privacy manifest (added 24 Oct 2026)
+
+`apps/bottles-up-vendor/ios/Runner/PrivacyInfo.xcprivacy` is the file Apple reads. It says: the app does not track; the kinds of data collected are **name, email address, phone number, user ID, photos or videos, other user content (chat, notes, incident reports) and purchase history (the bookings, orders and payments staff record for guests)**, each linked to the person's account and used only for the app's own function. It deliberately does not list location, contacts, device ID, advertising data or browsing history, because the app collects none of them. **The answers you give in App Store Connect ("App Privacy") must say the same**; the manifest does not replace them. Two judgement calls for you or the lawyer: (1) *Purchase history* and *Name/Email/Phone* also cover **guests'** details that staff type, not only staff's own; (2) crash reports go to Sentry only in a build made with a Sentry address (none yet): if you switch it on, the "Crash data / performance / other diagnostic data" boxes must be ticked too (the Sentry library already declares them itself).
