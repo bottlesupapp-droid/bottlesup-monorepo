@@ -14,13 +14,14 @@ Merge the website one first. Do not delete the branches on merge.
 Title: Batch 3 of the 15 Oct brief: floor plan, order stage Accepted, refunds, staff discounts, payouts, door sales, venue time zone (seven migrations)
 
 ## What this is
-The database and website side of batch 3 of the client's 15 Oct brief and the answers of 20 Oct: **seven migrations**, a few changed edge functions and three CMS pages. **None of it is applied to production yet** (the owner pastes one generated bundle, `supabase/go-live/apply_business_brief_3.sql` in the monorepo, after a pre-flight check).
+The database and website side of batch 3 of the client's 15 Oct brief and the answers of 20 Oct: **seven migrations plus one guarded correction**, a few changed edge functions and three CMS pages. **The database part is already live in production** (the owner pasted the first five on their own; the last two were applied on 24 Oct with a pre-flight and a post-flight check). The edge functions are not deployed yet.
 
 | Migration | Adds |
 |---|---|
 | `20261021100000_floor_plan_and_table_states` | table placement, included admissions per table, table holds and "unavailable", ONE shared count of taken tables (paid + checkouts in their 10-minute hold + blocks) used by the website picker, the walk-in and the checkout functions, move a booking to another table (with a record and `desk_booking_move_options`), deposit terms copied onto each new booking. Replaces 3 live functions, each behind a fingerprint guard. |
 | `20261022100000_order_accepted_stage` | the order stage Accepted; replaces 4 live functions behind the same kind of guard. |
-| `20261023100000_refund_policy_and_requests` | each venue's refund policy (up to 6 rules), refund requests (guest and staff), decide, a refund paid at the club recorded with a reference and/or a receipt photo filed under the booking, online refunds claimed for the Stripe function, the booking's terms, CMS views. |
+| `20261023100000_refund_policy_and_requests` | each venue's refund policy (up to 6 rules), refund requests (guest and staff), decide, a refund paid at the club recorded with a reference and/or a receipt photo, online refunds claimed for the Stripe function, the booking's terms, CMS views. |
+| `20261028100000_refund_receipt_evidence` | a guarded correction of two functions of the one above (already live): a receipt photo must be filed under its own booking, and the refund list returns the reference and the photo. |
 | `20261024100000_staff_discounts_and_complimentary` | the owner's discount limits, discounts and free bottles (within a limit at once, above it waiting for a manager, nobody approves their own), voiding, the checkout totals subtract an applied discount, CMS views. |
 | `20261025100000_payout_settings_and_ledger` | payout settings, per-business overrides and accounts set in the CMS (masked account only), the estimate of what is waiting, payout items ("Paid" needs a reference), `my_payouts` (owner and organizer, read only). |
 | `20261026100000_door_sales` | a door person sells a ticket (cash, or the club's own card machine with its receipt number): paid, issued with a normal ticket code and checked in once; the tier is locked while capacity is counted, so the last tickets cannot be sold twice; the same sale key twice is one sale; the door person's own shift summary. Adds five columns and one rule to `site_orders` (every existing order stays an online one). Nothing is charged or e-mailed. |
@@ -29,14 +30,15 @@ The database and website side of batch 3 of the client's 15 Oct brief and the an
 Edge functions changed: `create-table-booking-checkout`, `create-walkin-table-booking`, `cancel-table-booking`, `refund-table-booking-payment`, and the shared `bookingTotals` (eleven functions use it). CMS pages: Refunds, Discounts, Payouts. The refund policy is shown before payment and a guest can ask for a refund from their booking page.
 
 ## Test plan
-- [x] `tests/db/run.sh`: **3,851 assertions + 7 race scripts + 6 migration-guard scripts** pass. Every new function has tests for who may call it, every refusal, and the happy path; the races cover the last tickets and the same sale arriving twice at once (checked by removing the lock and the second look: both make the script fail).
+- [x] `tests/db/run.sh`: **3,894 assertions + 7 race scripts + 7 migration-guard scripts** pass. Every new function has tests for who may call it, every refusal, and the happy path; the races cover the last tickets and the same sale arriving twice at once (checked by removing the lock and the second look: both make the script fail).
 - [x] The go-live bundle was applied to a scratch database built as production is BEFORE it: pre-flight no rows, apply clean, post-flight 19 of 19, rollback complete (pre-flight no rows again), applied again.
 - [x] Website unit tests 1,025 passing at the last run; no TypeScript has changed since.
-- [ ] Before applying: run `supabase/audit/18_preflight_business_brief_3.sql` in production (it must return no rows).
-- [ ] After applying: run `supabase/audit/19_postflight_business_brief_3.sql` (19 rows, all `ok = true`), then deploy the changed edge functions (monorepo `supabase/go-live/README.md` 1h).
+- [x] Applied to production (24 Oct): the first five migrations were pasted by the owner earlier, the last two applied one at a time; post-flight `19_postflight_business_brief_3.sql` = 19 of 19 ok.
+- [ ] One guarded correction is still to apply: `20261028100000_refund_receipt_evidence` (a receipt photo must belong to its booking; the refund list returns the evidence). Tested with a guard script (`migration_guard_refund_receipt.sh`).
+- [ ] Then deploy the changed edge functions (monorepo `supabase/go-live/README.md` 1h); production still runs the September versions.
 
 ## Not verified
-Not applied to production; no edge function deployed; no real Stripe refund or payout was made; nothing was run on a phone.
+The correction `20261028100000` is not applied; no edge function deployed; no real Stripe refund or payout was made; nothing was run on a phone.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
