@@ -14,7 +14,7 @@ Merge the website one first. Do not delete the branches on merge.
 Title: Batch 3 of the 15 Oct brief: floor plan, order stage Accepted, refunds, staff discounts, payouts, door sales, venue time zone (seven migrations)
 
 ## What this is
-The database and website side of batch 3 of the client's 15 Oct brief and the answers of 20 Oct: **seven migrations plus one guarded correction**, a few changed edge functions and three CMS pages. **The database part is already live in production** (the owner pasted the first five on their own; the last two were applied on 24 Oct with a pre-flight and a post-flight check). The edge functions are not deployed yet.
+The database and website side of batch 3 of the client's 15 Oct brief and the answers of 20 Oct: **seven migrations plus one guarded correction**, a few changed edge functions and three CMS pages. **The database part is already live in production** (the owner pasted the first five on their own; the last two were applied on 24 Oct with a pre-flight and a post-flight check). The edge functions were deployed on 24 Oct.
 
 | Migration | Adds |
 |---|---|
@@ -34,11 +34,11 @@ Edge functions changed: `create-table-booking-checkout`, `create-walkin-table-bo
 - [x] The go-live bundle was applied to a scratch database built as production is BEFORE it: pre-flight no rows, apply clean, post-flight 19 of 19, rollback complete (pre-flight no rows again), applied again.
 - [x] Website unit tests 1,025 passing at the last run; no TypeScript has changed since.
 - [x] Applied to production (24 Oct): the first five migrations were pasted by the owner earlier, the last two applied one at a time; post-flight `19_postflight_business_brief_3.sql` = 19 of 19 ok.
-- [ ] One guarded correction is still to apply: `20261028100000_refund_receipt_evidence` (a receipt photo must belong to its booking; the refund list returns the evidence). Tested with a guard script (`migration_guard_refund_receipt.sh`).
-- [ ] Then deploy the changed edge functions (monorepo `supabase/go-live/README.md` 1h); production still runs the September versions.
+- [x] The guarded correction `20261028100000_refund_receipt_evidence` (a receipt photo must belong to its booking; the refund list returns the evidence) is applied (24 Oct); it has a guard script (`migration_guard_refund_receipt.sh`).
+- [x] The changed edge functions are deployed (24 Oct); the Stripe webhook still answers without a login and refuses an unsigned request.
 
 ## Not verified
-The correction `20261028100000` is not applied; no edge function deployed; no real Stripe refund or payout was made; nothing was run on a phone.
+No real booking, Stripe payment or payout has been tried against it; no real Stripe refund or payout was made; nothing was run on a phone.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
