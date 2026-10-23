@@ -43,6 +43,11 @@ if [ $STATUS -ne 0 ] || grep -qiE '"error"|^error|ERROR:|SQLSTATE' "$OUT/applied
   echo "!! FAILED (exit $STATUS): nothing from this migration is applied (it ran in one transaction)"; exit 1
 fi
 
+# A migration that only changes existing objects (constraints, columns) creates nothing to look for; zero rows would otherwise be reported as a failure.
+if [ "$(grep -o "array\[[^]]*\]" "$OUT/present.sql" | grep -o "'" | wc -l | tr -d ' ')" = "0" ]; then
+  echo "   applied. It creates no functions, tables or policies, so there is nothing to look for here: run the read-only audit named for it in docs/FINAL_STEPS.md."; exit 0
+fi
+
 supabase db query --linked --workdir "$WORKDIR" -f "$OUT/present.sql" > "$OUT/present.json" 2>/dev/null
 python3 -I - "$OUT/present.json" <<'PY'
 import json, sys
