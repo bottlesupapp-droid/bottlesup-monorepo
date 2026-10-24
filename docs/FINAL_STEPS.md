@@ -109,7 +109,8 @@ What needs you (none of it done):
 1. **Apple Developer** (team `4T453RG45S`): register the App ID `com.btlup.pop`. If Apple says it is not available, tell me and we pick another one before anything is built.
 2. **Confirm the payment approach:** payment happens on Stripe's page (the website's), opened inside the app, then the app asks the website how it went. No card details touch the app; no Apple Pay for now.
 3. **Tell me when to build** (no build or phone test has happened). The real-device checks for it will be: sign in, open an event, buy one ticket with a Stripe test card, see it in My tickets with its QR, scan it with the vendor app's door scanner, and delete a test account.
-4. Not built yet, and each needs a talk first: VIP table booking, add bottles / guest tickets / refund requests after buying, push notifications (needs a Firebase account), store paperwork (privacy text, data-safety answers, screenshots).
+4. **VIP table booking is built too (24 Oct, not run on a phone):** venues, nights and times, live availability, floor plan, bottles, refund terms, promo code, payment and the confirmation. The real-device check adds: book a table with a Stripe test card, see the confirmation, and scan its code with the vendor door scanner.
+5. Not built yet, and each needs a talk first: My bookings (needs `supabase db pull` of the production-only read policies), add bottles / guest tickets / refund requests after buying, push notifications (needs a Firebase account), store paperwork (privacy text, data-safety answers, screenshots). The whole list is `apps/bottles-up-user/REMAINING_WORK.md`.
 
 ## 7. If something goes wrong
 
