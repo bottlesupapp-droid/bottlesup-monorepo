@@ -101,6 +101,16 @@ The older checklists in `HANDOFF.md` (TEST CHECKLIST and TEST CHECKLIST 2, items
 
 Answered on 20 Oct and now built: payouts, refunds, discounts and free bottles, order stage Accepted, floor map, deposit terms, the 10-minute checkout hold, one booking system. Still waiting on the client: the **Event Lead** role and the ambassador program (including how Event Leads are paid); **Door Sales** extras: approved discounts or promo codes at the door (they need ticket discounts first), e-mailing the ticket to a guest sold at the door, a card reader built into the app, a manager's report of every door person's sales; how a **free bottle is claimed by someone who is not at a table**; **ticket discounts** for organizers; **settlements** of ticket earnings (who owes whom); the wording of the **guest e-mails** about a refund decision, and the rest of the e-mail sheet; the **legal text** (Terms, Privacy); push and SMS providers; a Sentry DSN or Firebase account if crash reporting is wanted; and a decision on the 15 old accounts to convert. `docs/BRIEF_15OCT_GAP_ANALYSIS.md` lists each, section by section, with what exists and what is missing.
 
+## 6b. The customer app (new 24 Oct: events and tickets are on the website's data; nothing built or run on a phone yet)
+
+Branch `feat/site-schema` of `bottles-up-user` (pushed, not merged). The app now has three tabs (Events, My tickets, Profile) and buys tickets through the website, so a ticket bought in the app shows on the website's owner and door screens. Bundle ID `com.bottlesup.user` on iOS and Android.
+
+What needs you (none of it done):
+1. **Apple Developer** (team `4T453RG45S`): register the App ID `com.bottlesup.user`. If Apple says it is not available, tell me and we pick another one before anything is built.
+2. **Confirm the payment approach:** payment happens on Stripe's page (the website's), opened inside the app, then the app asks the website how it went. No card details touch the app; no Apple Pay for now.
+3. **Tell me when to build** (no build or phone test has happened). The real-device checks for it will be: sign in, open an event, buy one ticket with a Stripe test card, see it in My tickets with its QR, scan it with the vendor app's door scanner, and delete a test account.
+4. Not built yet, and each needs a talk first: VIP table booking, add bottles / guest tickets / refund requests after buying, push notifications (needs a Firebase account), store paperwork (privacy text, data-safety answers, screenshots).
+
 ## 7. If something goes wrong
 
 * A database step fails: nothing from that file is applied (each runs in one transaction). Send me the message.
