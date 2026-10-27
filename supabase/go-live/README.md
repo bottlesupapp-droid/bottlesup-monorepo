@@ -157,6 +157,31 @@ version the repository has; anything else stops that migration before it changes
 
 The vendor app (branch `feat/business-brief-3`) copes with all of these functions being absent: each new screen says "not set up on this server yet" or "could not be loaded" with Try again, and the rest of the app keeps working.
 
+### 1i. Going live: the social side (six migrations: feature switches, profiles, posts and stories, explore and reviews, inbox and notifications, safety and moderation)
+
+**STATUS 27 Oct 2026: BUILT AND TESTED, NOT APPLIED ANYWHERE.** Website branch `feat/social-backend`, customer app branch `feat/social-app`. Everything is **additive** and **every feature starts switched OFF** (16 switches in the CMS under *Social settings*): applying the files changes nothing a customer can see. The apps ask the server which switches are on, so the database may go first and the app builds may go out before or after. It replaces no existing function; it adds 25 tables, the functions the apps call, one private storage bucket (`social-media`, three policies), seven nullable columns and two constraints on `site_venues`, and a few triggers and indexes (the exact lists are in the pre-flight and post-flight files, generated from the migrations).
+
+1. The bundle is generated from the migrations: `python3 -I supabase/go-live/build_social.py --check` must say the files are current.
+2. Run `supabase/audit/22_preflight_social.sql` in the production SQL editor. **It must return no rows.** A row says what is in the way (a name already taken, a bucket that exists, or an earlier table the files build on that is missing).
+3. Paste **`supabase/go-live/apply_social.sql`** (about 4,000 lines, 200 KB: the six migrations in order, each in its own begin/commit) and Run. An error in one file rolls back that file and stops the rest: send me the error text, edit nothing. If the editor refuses so large a paste, paste the six files from `apps/bottles-up-website-main/supabase/migrations/` (`20261101100000` to `20261105100000`) one after another, in order.
+4. Run `supabase/audit/23_postflight_social.sql`: **every row must say ok = true** (tables closed to direct access, nobody can call the helper functions, visitors cannot call the signed-in ones, the bucket is private, all 16 switches exist and are OFF).
+5. Add the nightly clean-up: `supabase/go-live/schedule_social_cleanup.sql` (a `pg_cron` job at 03:15 UTC that runs `public.social_housekeeping()`: stories that ended more than 7 days ago, notifications read more than 90 days ago and caption-idea counts older than two days; it never touches posts, comments, messages or reports). Then `supabase/audit/24_postflight_social_cleanup.sql` (its last row stays "not run yet" until the first 03:15). Undo: `rollback_social_cleanup.sql`.
+6. Deploy the edge functions (from `apps/bottles-up-website-main`, after the database): `suggest-caption` (new), `sweep-social-media` (new), `delete-account` (changed: it now also removes a deleted person's folders in the bucket).
+
+   ```bash
+   for f in suggest-caption sweep-social-media delete-account; do
+     supabase functions deploy "$f" --project-ref hwmynlghrmtoufyrcihp --use-api
+   done
+   supabase secrets set ANTHROPIC_API_KEY=<the owner's key> --project-ref hwmynlghrmtoufyrcihp
+   ```
+
+   Caption ideas need the key (your Anthropic account: it is billed per request; the daily limit is 20 per person). Without it the function says "not set up yet" and nothing else is affected. The key never goes in this repository.
+7. Schedule `sweep-social-media` once a day, the same way as the e-mail outbox in 1f step 4: Supabase dashboard > Integrations > Cron, job type "Supabase Edge Function", or `pg_cron` + `pg_net` with the **service role key** as the bearer token (the function refuses any other caller). It removes the pictures and videos no post uses any more (a story's files after the story is deleted, an upload whose post was never made); until it is scheduled the files only cost space.
+8. In the CMS (*Social settings*): write and publish the community rules (the app shows them before a person's first post, comment or message; have them read by whoever answers for the legal side), and add the banned words if you want any. In *Moderation*, someone must look at the reports **every day** once the first feature is on: a report is never acted on by itself. Then turn the switches on one at a time, in this order, using a test account first: `social`, `stories`, `reels`, `inbox`, `reviews`, `ai_captions`, `members_only`. The other nine (`split_payments`, `marketplace`, `venue_hire`, `referrals`, `subscriptions`, `advertising`, `creator_earnings`, `ranks`, `jobs`) belong to later chapters of the plan and do nothing yet.
+9. **Undo:** `supabase/go-live/rollback_social.sql` (one transaction). **It refuses, and changes nothing,** while any post, comment, message, review, report or follow exists, or the bucket holds a file: those are people's words and pictures. To stop the social side after launch, switch the features off in the CMS instead: that hides everything and deletes nothing. It is for a launch that never opened.
+
+The customer app (branch `feat/social-app`) shows nothing social while the switches are off, and where the functions are missing it says so in a sentence and carries on with tickets and bookings.
+
 ## 2. Check it (read only)
 
 Run `supabase/audit/04_postflight_website_migrations.sql` in the same SQL editor. The first row must say `OK`. Anything marked `STOP`
