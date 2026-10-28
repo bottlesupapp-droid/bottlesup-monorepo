@@ -67,6 +67,8 @@ Deployed on 19 Oct (see "Where things stand"); the website redeployed on Vercel 
 
 * **Switching on the guest e-mails** (optional, your call, deliberately NOT done): the client reads the wording in `supabase/functions/_shared/outbox.ts`, then add a 5-minute schedule that calls `process-outbox` with the service role key as the bearer (`supabase/go-live/README.md` 1f step 4). Until then every guest message stays "Queued, not sent yet" in the app, which is honest, and `process-outbox` does nothing when called by anyone else.
 
+* **Chat clean-up scheduled (25 Oct, on your yes):** ended event chats are deleted by a database job that runs every hour at minute 30 (`supabase/go-live/schedule_chat_purge.sql`; pg_cron was switched on for it). **One check left for you (1 minute):** paste `supabase/audit/21_postflight_chat_purge_schedule.sql` in the production SQL editor; all 8 rows must say true (row 8, "the latest run succeeded", could not be read by Claude: the CLI is logged in to an account production refuses). Undo: `supabase/go-live/rollback_chat_purge_schedule.sql`.
+
 ## 3b. Let staff delete their own account (new 22 Oct, written and tested, NOT applied; needed for the App Store)
 
 Deleting an account failed ("Failed to delete account") for anyone who accepted an invitation, scanned a ticket, handled cash or created a business. The fix is one website migration on branch `fix/account-deletion-actor-fks` (merged as website PR #13). Records stay; only the person is removed from them. No app rebuild and no function redeploy.
