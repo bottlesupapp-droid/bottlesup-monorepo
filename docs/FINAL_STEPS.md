@@ -25,6 +25,18 @@ If you ever build from the terminal instead: `flutter build ipa --release --dart
 
 **Checkout and payments** cannot be tried on that build either: they need the same settings. Once the new build opens, pay with a test card on Stripe's page and watch that the app says "paid" only after the website does. Say if it does not.
 
+## 0b. Google and Apple sign-in in both apps: your console steps (28 Oct)
+
+Built on branch `feat/social-login` in each app (customer commit `2763d47`, vendor commit `7f72486`), pushed, not merged, not built, not tried on a phone. Full list with the ids: `docs/SOCIAL_LOGIN_SETUP.md`. In short, only you can:
+
+1. **Apple Developer:** switch on *Sign In with Apple* for the App IDs `com.btlup.pop` and `com..bottlesUp.ORG`.
+2. **Supabase, Authentication, Providers, Apple:** Client IDs = `com.btlup.pop,com..bottlesUp.ORG`.
+3. **Google Cloud:** an Android client for `com.bottlesup.user` and one for `com.bottlesup.vendor` (upload-key SHA-1 now, and the Play app-signing SHA-1 once on Play); an iOS client for the vendor app's `com..bottlesUp.ORG` (**send Claude the client id** and Google switches on for the vendor app on iPhone); the consent screen published.
+4. **Supabase, Providers, Google:** Client IDs = every web and iOS client id of both apps, comma-separated.
+5. After merging: `pod install` in both apps, re-archive, check the build with `scripts/check_build_has_settings.sh`, then try on a phone (Claude needs your go-ahead for that).
+
+The vendor app only signs in to accounts that already exist; a brand-new Google or Apple identity is signed out again with "No BottlesUp Business account was found". Decision for you: whether to also block Supabase from keeping that empty sign-in (a production change).
+
 ## Where things stand (19 Oct, night): steps 1, 2 and 3 are DONE and validated
 
 * **Merged (by you, 13:34 to 13:42 UTC) and checked by Claude:** vendor `main` contains the whole stack (its only file difference from the stack head is the CI workflow it keeps), version 1.3.0+8; website `main` contains #2, the whole stack (#11), the e-mail wording (#9) and the September record (#12), and all nine migration files. Left over and harmless: website #7 (old stacked piece, contained in #11), website #3 (closed), website #4 to #6, #8, #10 show as merged.
