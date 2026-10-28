@@ -12,13 +12,16 @@ Rule for Claude sessions reading this: do none of these without the user's expli
 
 **What I changed** (customer app, branch `feat/social-app`, not built): a build without its settings now shows a page that says "BottlesUp could not start" and why, instead of a white screen; `ios/Scripts/generate_dart_defines.sh` now stops the build when `env.json` is missing; and `scripts/check_build_has_settings.sh` looks inside an archive or `.ipa` for the settings, so you find out in a second and not from a tester.
 
-**What you do** (about 10 minutes, once):
-1. In `apps/bottles-up-user`, copy `env.example.json` to `env.json` and fill in two values: `SUPABASE_URL` (`https://hwmynlghrmtoufyrcihp.supabase.co`) and `SUPABASE_ANON_KEY` (Supabase dashboard, Project settings, API, the *anon public* key). The Stripe line can stay as it is: the app does not use it (payments open Stripe's own page). Never commit this file.
-2. Build with the settings: `flutter build ipa --release --dart-define-from-file=env.json --build-number=4` (TestFlight refuses a build number it has already seen; 3 is taken).
-3. Check it before uploading: `./scripts/check_build_has_settings.sh build/ios/ipa/*.ipa` must print `OK: the settings are in this build.`
-4. Upload that `.ipa` (Xcode Organizer or Transporter) and test it on a phone.
+**What I prepared on this Mac (28 Oct, no build):** `apps/bottles-up-user/env.json` now exists (git-ignored; made from the values you put in `env.example.json`, which I put back to its placeholders; the key is the project's public *anon* key, checked), `ios/Flutter/DartDefines.xcconfig` is generated from it, the version is `2.0.1+4`, and `flutter build ios --config-only` refreshed Xcode's settings (no compile).
 
-If you archive from Xcode instead, run `cd ios && SRCROOT="$(pwd)" bash Scripts/generate_dart_defines.sh && cd ..` first, then check the archive with `./scripts/check_build_has_settings.sh` (no argument: it takes the newest one).
+**What you do** (Xcode route, about 10 minutes):
+1. `open ios/Runner.xcworkspace`, choose *Any iOS Device (arm64)*, then *Product, Archive*.
+2. Before uploading, check it: `./scripts/check_build_has_settings.sh` (no argument: it takes the newest archive) must print `OK: the settings are in this build` and `version 2.0.1 (4)`.
+3. *Distribute App*, then *TestFlight & App Store*, and test the new build on a phone.
+
+If you ever build from the terminal instead: `flutter build ipa --release --dart-define-from-file=env.json --build-number=5` and check the `.ipa` with the same script. If `env.json` or the generated file is ever missing, copy `env.example.json` to `env.json`, fill in `SUPABASE_URL` and `SUPABASE_ANON_KEY`, and run `cd ios && SRCROOT="$(pwd)" bash Scripts/generate_dart_defines.sh && cd ..`. Never commit `env.json` or put real values in `env.example.json`.
+
+**Android bundle (built 28 Oct, not uploaded):** `apps/bottles-up-user/build/app/outputs/bundle/release/app-release.aab`, version 2.0.1 build **5** (Play Console already has 4). Upload it in Play Console to internal testing. It is signed with the shared BottlesUp upload key; if Play says the signing key is wrong, the key registered for `com.bottlesup.user` is a different one: compare the certificate SHA-1 `F1:C8:48:AD:18:C2:B7:C7:5D:8F:02:75:7E:D6:10:D5:33:44:0E:D7` with Play Console, App integrity. Build 5 of Android and build 4 of iOS are numbered separately; keep each store's number going up.
 
 **Checkout and payments** cannot be tried on that build either: they need the same settings. Once the new build opens, pay with a test card on Stripe's page and watch that the app says "paid" only after the website does. Say if it does not.
 
