@@ -6,6 +6,53 @@ while preparing it.** Each step says what it does, how to check it, and how to u
 
 Rule for Claude sessions reading this: do none of these without the user's explicit yes for that step.
 
+## PENDING, CRITICAL FIRST (30 Oct 2026; the detail for each item is in the numbered sections below and in `docs/VENDOR_APP_100_PERCENT_AUDIT.md`)
+
+Who: **You** = your click, account or decision. **Me** = Claude, on your go. **Client** = needs their answer. Nothing here is done unless it says DONE.
+
+### Critical: money, safety, or "the app on the stores would not match production"
+| # | What | Who | Why it is critical |
+|---|---|---|---|
+| 1 | Merge vendor pull request [#26](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/26) (keep the branch) | You | The whole third batch is live in the database since 24 Oct but not in `main`; a build from `main` lacks its screens. Checks passed. |
+| 2 | **Double booking online.** Built and tested 30 Oct on website branch `fix/atomic-table-checkout` (migration `20261111100000_atomic_table_checkout` + `create-table-booking-checkout` change; race script proves two guests cannot take the last table). Needs: pull request, merge, then your "apply it" (migration FIRST, function deploy second; the function falls back to the old behaviour if the migration is missing). | You, then me | Two guests paying for the last table in the same moment can both succeed today. |
+| 3 | **A payment that arrives after its 10-minute hold** can still make a second paid booking for the same table (the webhook marks it paid without counting). Proposed: flag the booking to the manager's "needs attention" queue and use the existing refund flow. Needs your OK on the rule. | You decide, me | Same oversell, rarer. |
+| 4 | Website `main` CI is red (job "Migrations replay and database tests"; `450_venue_time_zone` and others). Toronto's clocks change **Sun 1 Nov**. Cause unknown. | Me (say "look at it") | It is the safety net for the database all three apps share, and the failing test is about time zones. |
+| 5 | Real-phone pass of the vendor app (`docs/FINAL_STEPS.md` section 5): it has never run on a phone. Needs build 1.4.0 first (item 8). | You (+ me to build) | Every "Ready to test" in the audit means exactly that: not tested. |
+| 6 | Security: `trigger_rsvp_approval_email()` in production has a bearer token and an apikey written into its body. If either is the service-role key, rotate it (Supabase, Settings, API) and move the call to a stored secret. | You (me to read-only check on request) | Anyone who can read function definitions would hold the key. |
+
+### High: needed before the stores or the client's acceptance
+| # | What | Who |
+|---|---|---|
+| 7 | Social login for the vendor app: already built and tested on vendor branch `feat/social-login` (sign-in only: it never creates a business). Say "open the pull request" after #26 merges; then the console steps in `docs/SOCIAL_LOGIN_SETUP.md` (Apple: Sign In with Apple on `com..bottlesUp.ORG`, Supabase Apple client ids; Google: an Android client for `com.bottlesup.vendor` with the upload and Play SHA-1s, an iOS client id that you send me, Supabase Google client ids). | You |
+| 8 | Build vendor 1.4.0 (build 10) for iOS and Android from `main` after #26; check the `.ipa` holds `PrivacyInfo.xcprivacy`; upload to TestFlight and Play internal testing. | You say "build 1.4.0"; you upload |
+| 9 | Apple may object to the bundle ID `com..bottlesUp.ORG` (double dot); decide before the store listing. Invitation links: serve `/.well-known/assetlinks.json` (Android) and add Associated Domains (iOS). | You |
+| 10 | Test login roles (`supabase/go-live/test_login_roles.sql`) and remove the demo night afterwards (`demo_night_cleanup.sql`). CMS Payouts > Settings (percentage, weekday, wait days). Support e-mail, phone and address on the CMS Content page. | You |
+| 11 | Switch on guest e-mails (`process-outbox` on a 5-minute schedule) once the client has read the wording. Until then walk-in confirmations, refund decisions and VIP invitations stay "Queued, not sent yet". | You / client |
+| 12 | Legal Terms and Privacy text; Sentry DSN if crash reporting is wanted; try "Delete my account" with a real staff account once #26 is in. | Client / you |
+| 13 | Two website branches use the same migration number `20261102100000` (`feat/profile-date-of-birth` and `feat/social-backend`). Rename one before either is applied. | Me (say "fix the clash") |
+| 14 | `supabase db pull` to commit production-only SQL (17 functions, `profiles`, `promo_codes`) and reconcile the migration history before anyone runs `supabase db push`. | Me, with your Supabase login |
+
+### Medium: the rest of the client's Phase 2 brief that I can build, each needs one answer from you first
+Done 30 Oct: **a manager can hand a service request to a server** (vendor branch `feat/vendor-remaining-ops`, app only, 139 server-desk tests, mutation-checked). The others are not started because each needs a design or policy choice that is yours, not mine:
+| # | Item (brief section) | The question | My recommendation |
+|---|---|---|---|
+| 15 | Door: filters by guest type, controlled override with a reason, exit tracking (18) | Who may override a refusal ("already used", "wrong event") and in which cases? What are "Invited" and "Special guests" (guest-list entries?) | Door lead and manager only, reason required, always logged; filters: Tickets, Table guests, VIP, plus a guest-list kind you name. |
+| 16 | Bottle signs (14, 28) | Today the guest's sign text is stored on the booking at checkout but staff never see it. One sign per booking or per bottle? Which bottles are eligible? Is staff review needed? | Per bottle line; the owner marks eligible bottles; a manager reviews before service; show the existing text to staff first (small). |
+| 17 | Inventory: stock held for orders vs handed out, package components, most-sold (22) | Do accepted-but-undelivered bottle lines hold stock? Are there packages (a bundle of bottles)? | Yes to holding on Accepted; packages only if the client uses them. |
+| 18 | Temporary staff: individual expiring link, identity check, renewal request (12) | How is a person's identity checked (e-mail code, SMS code, name only)? | E-mail code now; SMS when a provider exists. |
+| 19 | Organizer: "Your Venue Access" panel and read-only Sales tab (7, 8) | Which things can a venue grant per event (bar sales, ticket and check-in figures, capacity, table sales, chat, settlement)? | A per-event checklist of those six, off by default. |
+| 20 | Reports: organizer PDF, consolidated owner PDF, a new version after a correction (27) | A consolidated total needs the currency in each report (a change to a live function). Side-by-side per venue with no total is possible now. | Per-venue side by side now; totals when currency is added. |
+| 21 | Manager quick actions "Assign Staff" and "Send Alert" (6) | What does "Send Alert" send, and to whom (a pinned chat message, a security alert)? | A pinned message in the club's staff chat. |
+| 22 | The four "Not available yet" rows in More: Complimentary bottles, door Promo codes, organizer Settlement, organizer Notifications | Hide them until built, or leave them honest? | Hide them for the store build. |
+| 23 | Classic dashboard (15 old accounts, about 18 "Coming Soon" messages, 8 TODOs) | Convert those accounts and archive the classic screens, or leave? | Convert, then archive. |
+| 24 | Event-cancellation payment queue (26), live updates and a last-sync line (2, 29), notification preferences and PDF recipients (28) | Events have no "cancelled" status yet; push and e-mail do not exist to configure. | Do after the items above. |
+
+### Waiting on the client (nothing for me to build until they answer)
+Stripe in-person payments and card reader (15, 18); whether Phase 2 pays organizers out (25; a record-only settlement can start before this); the point-of-sale provider (24; "BottlesUp Entries" and "Closing Report Upload" need no provider); push and SMS providers (23); ticket discounts and staff promo codes (19); the complimentary-bottle claim link (20; their brief describes it, so I can build to it if you say so); default timers (invitation expiry, reminders, escalation); the fee schedule and who bears each fee; a separate cashier role or the manager as verifier; the private-room conflict rule (10); Event Lead and ambassadors (15 Oct brief); organizer publishing and ticket tiers (7); the 15 classic accounts; whether existing partner accounts migrate.
+
+### Customer app and website (not the vendor app; details in sections 0 to 0d and 6 to 6d below)
+Customer app: archive and upload a build WITH its settings (section 0; Android versionCode must be above Play's latest, which showed 4); Google/Apple console steps (0b); retry Apple sign-in on the phone (0c); the complete-profile branches (open the pull requests, merge the website one, "apply it", merge `feat/social-login` then `feat/complete-profile`; 0d); add `bottlesup://reset-password` to Supabase redirect URLs (6a); the social-side go-live bundle and decisions (6c, 6d).
+
 ## 0. First, before anything else: the TestFlight build opens to a white screen (found 28 Oct)
 
 **What happened.** The build uploaded on 28 Oct (`com.btlup.pop`, version 2.0.1 build 3) was made without its Supabase settings. I looked inside that archive: the message "Supabase credentials not configured" is in it, but there is no Supabase address and no key. The app stops on start before it draws anything, which on a phone is a blank white screen. Nothing else is wrong with it. This Mac has **no `env.json`** (it is git-ignored, so it never comes with the code) and no `ios/Flutter/DartDefines.xcconfig`, which is why an Xcode archive carries no settings.

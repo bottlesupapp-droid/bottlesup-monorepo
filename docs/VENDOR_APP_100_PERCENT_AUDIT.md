@@ -29,7 +29,7 @@ Written by Claude on the user's "lets audit what all is left for vendor app for 
 | 3 | Temporary staff invite expires or is revoked | Partly | Access window and revoke built, actions stay attributable. Not built: individual secure expiring link with identity check, and "request renewed access" on an expired link. |
 | 4 | Organizer links a venue | Partly | Agreement built well: every section-8 term, versions, both sides accept the same version, sample calculation, "above the threshold" vs "all sales once reached". Missing: the "Your Venue Access" panel and per-event data grants. |
 | 5 | Upfront charge alternatives | Partly | Reservation fee, credit toward minimum, admission, recipient, split: built. The explicit "combination" and per-event table rules are not. |
-| 6 | Two users book the same table | Partly | Staff walk-in and desk lock the table type (race scripts). **The online checkout does not** (section 4, D1). |
+| 6 | Two users book the same table | Partly | Staff walk-in and desk lock the table type (race scripts). **The online checkout did not**; the fix is BUILT and tested (30 Oct, website branch `fix/atomic-table-checkout`) but NOT merged or applied. A payment that lands after its 10-minute hold can still oversell (section 4, D1). |
 | 7 | Prepaid order scanned | Ready to test | Payment and service kept independent. |
 | 8 | Pay-at-venue order | Ready to test | Evidence, amount remaining, review state. |
 | 9 | Cash table and handover | Ready to test | |
@@ -69,7 +69,7 @@ Written by Claude on the user's "lets audit what all is left for vendor app for 
 | 14 | Bottle orders | Bottle signs; applying a permitted code on an order. |
 | 15 | Payments, evidence, cash | Integrated (Stripe) payment from the app; the app records payments, it takes none. |
 | 16 | Walk-in sales | Timed hold during checkout (the walk-in is booked at once); phone-tap payment. |
-| 17 | Service requests | Assign to a person; automatic escalation after an interval (escalation is by hand, with a reason). |
+| 17 | Service requests | Automatic escalation after an interval (escalation is by hand, with a reason). *Assigning to a person: DONE 30 Oct (vendor branch `feat/vendor-remaining-ops`, not merged).* |
 | 18 | Door | Filters (Tickets, Booth Guests, VIP, Invited, Special Guests); controlled override with reason (not found in the code); exit tracking; integrated card; ticket discounts at the door. |
 | 20 | Complimentary bottles | Claim link and customer claim page. |
 | 22 | Inventory | Reserved vs issued (available-to-sell vs physical), packages with components, most-sold by period. |
@@ -96,11 +96,11 @@ Written by Claude on the user's "lets audit what all is left for vendor app for 
 ### B. Code I can build without waiting for the client (proposed, sizes rough: S = a screen and a function, M = a database module plus screens, L = several modules)
 | Item | Brief § | Size |
 |---|---|---|
-| Fix the online checkout race (D1) and reconcile a payment that lands after the hold lapsed | 10, 16, 31 #6 | M (migration + function deploy) |
+| Fix the online checkout race (D1): **BUILT 30 Oct, not applied.** Still to do: reconcile a payment that lands after the hold lapsed | 10, 16, 31 #6 | M (migration + function deploy) |
 | Bottle signs (owner picks eligible items, server types the text, it travels with the order, optional review) | 14, 28 | M |
 | Inventory: reserved vs issued, package components, most-sold by period | 22 | M |
 | Door: category filters, controlled override with reason, optional exit tracking | 18 | M |
-| Service requests: assign to a person | 17 | S |
+| Service requests: assign to a person: **DONE 30 Oct** (the database already had it; app only) | 17 | S |
 | Manager quick actions: Assign Staff, Send Alert | 6 | S |
 | Temporary staff: individual expiring link, identity check, request-renewal page | 12 | M (the identity method needs a one-line decision) |
 | Organizer: "Your Venue Access" panel, Sales tab (read only) | 7, 8 | M |
@@ -118,7 +118,7 @@ Written by Claude on the user's "lets audit what all is left for vendor app for 
 - **Push and SMS providers** (23), **timers** (invitation expiry, reminders, escalation interval; the 10-minute hold is decided), **fee schedule** (final rates, who bears them), **verifier role** (separate cashier or the manager), **private-room conflict rule** (10), **Event Lead and ambassadors** (15 Oct brief), **organizer publishing and ticket tiers** (7), **what to do with the 15 classic vendor accounts**, whether existing partner accounts migrate.
 
 ### D. Problems found in this audit
-1. **D1. The online table checkout is not airtight.** `supabase/functions/create-table-booking-checkout/index.ts` reads the count of taken tables, then inserts a pending booking, with no lock between the two; its own comment says "Not airtight under heavy concurrent checkouts". Two people paying for the last table in the same moment can both get through. Staff paths (walk-in, desk) lock the table type and are race-tested. Fix: do the count and the insert inside one database function that locks the table type, as the walk-in does, and reconcile a payment that is confirmed after its hold lapsed. This is a production change (migration plus function deploy): not done, needs your go-ahead.
+1. **D1. The online table checkout is not airtight.** `supabase/functions/create-table-booking-checkout/index.ts` reads the count of taken tables, then inserts a pending booking, with no lock between the two; its own comment says "Not airtight under heavy concurrent checkouts". Two people paying for the last table in the same moment can both get through. Staff paths (walk-in, desk) lock the table type and are race-tested. Fix: do the count and the insert inside one database function that locks the table type, as the walk-in does, and reconcile a payment that is confirmed after its hold lapsed. This is a production change (migration plus function deploy): **the fix was written and tested on 30 Oct** (website branch `fix/atomic-table-checkout`: migration `20261111100000_atomic_table_checkout.sql`, 37 database assertions, a two-guests race script that fails without the lock, 29 new edge tests, all 34 SQL mutants caught, and the TypeScript mutants caught once two test gaps (promo code and discount reaching the reservation) were closed; the full database suite passes with 4,034 assertions) but it is NOT merged, applied or deployed. Still open: a payment that is confirmed after its hold has lapsed is marked paid without a capacity check, so a second paid booking is possible; that needs a rule from you (see `docs/FINAL_STEPS.md`, item 3).
 2. **D2. The website's database CI is red on `main`, and the cause of the time-zone failure is not known.** Test `450_venue_time_zone.sql` ("8 pm in Vancouver is 3 hours later than 8 pm in Toronto": expected 3, got 2) failed in CI on 29 Oct; it passed in my local run on 29 Oct, and CI stops at the first failing file so later tests did not run. Toronto's clocks change this Sunday, 1 Nov. I have not shown whether this is only a date-dependent test or a real mistake in how the refund policy counts hours across a clock change. Worth a look before then.
 3. **D3. Four "Not available yet" entries in the More menu** (Complimentary bottles, Promo codes, organizer Settlement, organizer Notifications). Honest, but a store reviewer or the client sees dead rows. Either hide each until it is built or build them. Small change; your choice.
 4. **D4. The classic dashboard is still routed** for the 15 classic vendor accounts and still has about 18 "Coming Soon" messages and 8 TODOs (Delete Event, Share Event, Edit Business Details, Change Password, 2FA, Notifications...). It is not part of the workspace app. Decide: convert those accounts and archive the classic screens, or leave them.
