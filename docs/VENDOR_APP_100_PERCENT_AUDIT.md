@@ -20,7 +20,7 @@ Written by Claude on the user's "lets audit what all is left for vendor app for 
 
 ## 2. The client's 23 completion scenarios (section 31): my reading
 
-**12 ready to test, 8 partly built, 3 not built, 0 passed.**
+**13 ready to test, 7 partly built, 3 not built, 0 passed** (updated 30 Oct evening: scenario 6 moved up because both of its fixes are built, but only once website PRs #17 and #19 are merged and applied).
 
 | # | Scenario | Status | Why |
 |---|---|---|---|
@@ -29,7 +29,7 @@ Written by Claude on the user's "lets audit what all is left for vendor app for 
 | 3 | Temporary staff invite expires or is revoked | Partly | Access window and revoke built, actions stay attributable. Not built: individual secure expiring link with identity check, and "request renewed access" on an expired link. |
 | 4 | Organizer links a venue | Partly | Agreement built well: every section-8 term, versions, both sides accept the same version, sample calculation, "above the threshold" vs "all sales once reached". Missing: the "Your Venue Access" panel and per-event data grants. |
 | 5 | Upfront charge alternatives | Partly | Reservation fee, credit toward minimum, admission, recipient, split: built. The explicit "combination" and per-event table rules are not. |
-| 6 | Two users book the same table | Partly | Staff walk-in and desk lock the table type (race scripts). **The online checkout did not**; the fix is BUILT and tested (30 Oct, website branch `fix/atomic-table-checkout`) but NOT merged or applied. A payment that lands after its 10-minute hold can still oversell (section 4, D1). |
+| 6 | Two users book the same table | Ready to test (after website #17 and #19 are merged and applied) | Staff walk-in and desk always locked the table type. The online checkout now does too (#17, race-tested). A payment that lands after its 10-minute hold is flagged for the manager and gets no confirmation (#19 + the vendor screen). Not run against a real database or a phone. |
 | 7 | Prepaid order scanned | Ready to test | Payment and service kept independent. |
 | 8 | Pay-at-venue order | Ready to test | Evidence, amount remaining, review state. |
 | 9 | Cash table and handover | Ready to test | |
@@ -60,13 +60,13 @@ Written by Claude on the user's "lets audit what all is left for vendor app for 
 |---|---|---|
 | 2 | Navigation and behavior | Last-sync time and a pending-actions list on screens; night/event in the context bar (it shows role, business, scope). |
 | 4 | Venue-owner onboarding | Website-first by decision (16 Oct); not re-audited today. The app shows verification and setup status. |
-| 6 | Manager dashboard | Quick actions "Assign Staff" and "Send Alert" (Add walk-in, Message team, Close night exist). |
+| 6 | Manager dashboard | *Assign staff and Send alert: DONE 30 Oct (vendor #28).* Nothing else missing that was checked. |
 | 7 | Organizer events | Tickets (name, price, quantity, sale window, room access, benefits), venue selection on the event, publishing, Sales and Settlement tabs. BottlesUp's team publishes today. |
 | 8 | Venue linking | "Your Venue Access" panel and per-event data grants. |
 | 9 | Table-payment configuration | Explicit combination purpose, per-event table rules and organizer pricing, versioned fee schedule. |
-| 10 | Rooms, floor plan, availability | Private-room buyouts; availability is per table **type** (a count), not individual physical tables with their own stable IDs; late payment after a hold lapses is not reconciled. |
+| 10 | Rooms, floor plan, availability | Private-room buyouts; availability is per table **type** (a count), not individual physical tables with their own stable IDs; late payment after a hold lapses: *flagged for the manager, DONE 30 Oct (#19).* |
 | 12 | Team and shifts | Secure expiring links with identity check; request-renewal page. |
-| 14 | Bottle orders | Bottle signs; applying a permitted code on an order. |
+| 14 | Bottle orders | *The guest's sign from checkout is now shown to staff (website #20, vendor #28).* The rest of signs (owner marks eligible bottles, server types text per line, review) and applying a permitted code on an order are not built. |
 | 15 | Payments, evidence, cash | Integrated (Stripe) payment from the app; the app records payments, it takes none. |
 | 16 | Walk-in sales | Timed hold during checkout (the walk-in is booked at once); phone-tap payment. |
 | 17 | Service requests | Automatic escalation after an interval (escalation is by hand, with a reason). *Assigning to a person: DONE 30 Oct (vendor branch `feat/vendor-remaining-ops`, not merged).* |
@@ -119,8 +119,8 @@ Written by Claude on the user's "lets audit what all is left for vendor app for 
 
 ### D. Problems found in this audit
 1. **D1. The online table checkout is not airtight.** `supabase/functions/create-table-booking-checkout/index.ts` reads the count of taken tables, then inserts a pending booking, with no lock between the two; its own comment says "Not airtight under heavy concurrent checkouts". Two people paying for the last table in the same moment can both get through. Staff paths (walk-in, desk) lock the table type and are race-tested. Fix: do the count and the insert inside one database function that locks the table type, as the walk-in does, and reconcile a payment that is confirmed after its hold lapsed. This is a production change (migration plus function deploy): **the fix was written and tested on 30 Oct** (website branch `fix/atomic-table-checkout`: migration `20261111100000_atomic_table_checkout.sql`, 37 database assertions, a two-guests race script that fails without the lock, 29 new edge tests, all 34 SQL mutants caught, and the TypeScript mutants caught once two test gaps (promo code and discount reaching the reservation) were closed; the full database suite passes with 4,034 assertions) but it is NOT merged, applied or deployed. Still open: a payment that is confirmed after its hold has lapsed is marked paid without a capacity check, so a second paid booking is possible; that needs a rule from you (see `docs/FINAL_STEPS.md`, item 3).
-2. **D2. The website's database CI is red on `main`, and the cause of the time-zone failure is not known.** Test `450_venue_time_zone.sql` ("8 pm in Vancouver is 3 hours later than 8 pm in Toronto": expected 3, got 2) failed in CI on 29 Oct; it passed in my local run on 29 Oct, and CI stops at the first failing file so later tests did not run. Toronto's clocks change this Sunday, 1 Nov. I have not shown whether this is only a date-dependent test or a real mistake in how the refund policy counts hours across a clock change. Worth a look before then.
-3. **D3. Four "Not available yet" entries in the More menu** (Complimentary bottles, Promo codes, organizer Settlement, organizer Notifications). Honest, but a store reviewer or the client sees dead rows. Either hide each until it is built or build them. Small change; your choice.
+2. **D2. FIXED 30 Oct (website #18, green): the website's database CI was red on `main`.** Original finding: the cause of the time-zone failure was not known; it is now: the newer time-zone data in CI makes British Columbia permanent UTC-07 from 1 Nov 2026, so the test's 3 hours became 2 (not a product bug); a second test matched random digits; see HANDOFF. Original text follows. Test `450_venue_time_zone.sql` ("8 pm in Vancouver is 3 hours later than 8 pm in Toronto": expected 3, got 2) failed in CI on 29 Oct; it passed in my local run on 29 Oct, and CI stops at the first failing file so later tests did not run. Toronto's clocks change this Sunday, 1 Nov. I have not shown whether this is only a date-dependent test or a real mistake in how the refund policy counts hours across a clock change. Worth a look before then.
+3. **D3. Four "Not available yet" entries in the More menu** (Complimentary bottles, Promo codes, organizer Settlement, organizer Notifications): **DONE 30 Oct, hidden until built** (vendor #28; one constant brings them back for development).
 4. **D4. The classic dashboard is still routed** for the 15 classic vendor accounts and still has about 18 "Coming Soon" messages and 8 TODOs (Delete Event, Share Event, Edit Business Details, Change Password, 2FA, Notifications...). It is not part of the workspace app. Decide: convert those accounts and archive the classic screens, or leave them.
 5. **D5. Batch 3 is live in the database and functions (since 24 Oct) but not in `main`**, so anyone building the app from `main` today gets a build that lacks the screens for tables already in production. Merging #26 closes this.
 6. **D6. Vendor working tree has two uncommitted generated-file changes** (`.flutter-plugins-dependencies`, `ios/Runner.xcodeproj/project.pbxproj`). I did not make them. Check before building.

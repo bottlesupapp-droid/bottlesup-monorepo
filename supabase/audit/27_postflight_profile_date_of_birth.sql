@@ -1,4 +1,4 @@
--- 27: PRE- and POST-FLIGHT for the website migration 20261102100000_profile_date_of_birth (profiles.date_of_birth, and the age kept in step with it by a trigger). Read-only. Every row should say ok = true.
+-- 27: PRE- and POST-FLIGHT for the website migration 20261112100000_profile_date_of_birth (profiles.date_of_birth, and the age kept in step with it by a trigger). Read-only. Every row should say ok = true.
 -- BEFORE the migration: rows 1 to 5 and 8 say ok = false (nothing of ours is there yet; actual = missing, none or n/a) and rows 6 and 7 ok = true (the age rule and the existing trigger are the ones the migration relies on).
 -- AFTER it: all 8 rows ok = true.
 with col as (
