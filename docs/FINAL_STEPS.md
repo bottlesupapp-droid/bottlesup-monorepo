@@ -37,6 +37,14 @@ Built on branch `feat/social-login` in each app (customer commit `2763d47`, vend
 
 The vendor app only signs in to accounts that already exist; a brand-new Google or Apple identity is signed out again with "No BottlesUp Business account was found". Decision for you: whether to also block Supabase from keeping that empty sign-in (a production change).
 
+## 0c. Sign in with Apple (and a new phone sign-up) fails with "Database error saving new user": fix written and tested, NOT applied (29 Oct)
+
+**Cause (read-only checks on production):** the trigger that gives every new account a row in the older `vendors` table writes the account's e-mail into `vendors.email`, which is required. Apple does not always send the e-mail (it is sent the first time a person authorizes an app), and a phone sign-up never has one, so the insert failed and took the whole sign-up with it. Accounts with an e-mail were never affected (e-mail and Google sign-ups work). Not proven for your exact attempt: the Postgres log line (Dashboard, Logs, Postgres, 3:28 pm) would show `null value in column "email" of relation "vendors"`.
+
+**The fix** is database only (no app rebuild): website branch `fix/signup-without-email`, migration `20261031100000_signup_without_email.sql`. An account with no e-mail simply gets no `vendors` row; nothing else changes. It replaces the live function only if it is exactly the version I read on 29 Oct, otherwise it stops and changes nothing. Full suite green, 16 deliberate breakages all caught. What you do: (1) say "open the pull request" (or open https://github.com/KDR9MGR/bottles-up-website/pull/new/fix/signup-without-email) and merge it; (2) say "apply it": I apply that one file in one transaction, run `supabase/audit/26_postflight_signup_without_email.sql` (5 rows, all true) and you retry Apple sign-in on the phone. Undo: `tests/db/fixtures/handle_new_user_before.sql` puts the old function back.
+
+Testing on the phone meanwhile (no fix needed): iPhone Settings, your name, Sign-In & Security, Sign in with Apple, BottlesUp, Stop Using Apple ID, then sign in again: Apple treats it as a first sign-in and sends an e-mail. Not tried.
+
 ## Where things stand (19 Oct, night): steps 1, 2 and 3 are DONE and validated
 
 * **Merged (by you, 13:34 to 13:42 UTC) and checked by Claude:** vendor `main` contains the whole stack (its only file difference from the stack head is the CI workflow it keeps), version 1.3.0+8; website `main` contains #2, the whole stack (#11), the e-mail wording (#9) and the September record (#12), and all nine migration files. Left over and harmless: website #7 (old stacked piece, contained in #11), website #3 (closed), website #4 to #6, #8, #10 show as merged.
