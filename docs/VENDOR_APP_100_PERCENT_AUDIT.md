@@ -22,18 +22,20 @@ Written by Claude on the user's "lets audit what all is left for vendor app for 
 
 **13 ready to test, 7 partly built, 3 not built, 0 passed** (updated 30 Oct evening: scenario 6 moved up because both of its fixes are built, but only once website PRs #17 and #19 are merged and applied).
 
+**UPDATE 31 Oct, after "start with the items you can build now": 17 ready to test, 3 partly built (5, 22, 23), 3 not built (13, 17, 18), 0 passed.** Scenarios 1, 3, 4 and 10 moved up (rows below); scenario 22 gained the organizer PDF and the combined owner PDF but stays partly built (the PDFs are shared from the app; nothing e-mails them automatically). Everything is built and tested with fakes and a scratch database, on pull requests that are NOT merged, applied or deployed.
+
 | # | Scenario | Status | Why |
 |---|---|---|---|
-| 1 | Owner adds two clubs | Partly | Add venue, separate setup/staff/stock, Home across venues, date filter: built. No consolidated multi-venue report or PDF. |
+| 1 | Owner adds two clubs | Ready to test (31 Oct; website #22, vendor #33) | Add venue, separate setup/staff/stock, Home across venues, date filter: built. **The combined report is built:** one night, every club side by side with its final/preliminary state, totals only when all are in one currency, shareable as a PDF. |
 | 2 | Manager sees the assigned club only | Ready to test | Enforced in the database, tested. |
-| 3 | Temporary staff invite expires or is revoked | Partly | Access window and revoke built, actions stay attributable. Not built: individual secure expiring link with identity check, and "request renewed access" on an expired link. |
-| 4 | Organizer links a venue | Partly | Agreement built well: every section-8 term, versions, both sides accept the same version, sample calculation, "above the threshold" vs "all sales once reached". Missing: the "Your Venue Access" panel and per-event data grants. |
+| 3 | Temporary staff invite expires or is revoked | Ready to test (31 Oct; website #25, vendor #36) | Access window and revoke built, actions stay attributable. **Built 31 Oct:** an individual expiring link that needs a 6-digit code e-mailed to the invited address (enforced by the table), and "ask for a new link" on an expired link, which the person who invited them sees. Link length is chosen by the inviter (24 hours suggested): the client has not set a default. |
+| 4 | Organizer links a venue | Ready to test (31 Oct; website #24, vendor #35) | Agreement built well: every section-8 term, versions, both sides accept the same version, sample calculation, "above the threshold" vs "all sales once reached". **Built 31 Oct:** the club allows six things one by one (bar sales, ticket check-ins, capacity, table sales, operational chat, settlement) under an active agreement; the organizer's "Your Venue Access" panel and read-only Sales. Bar sales, chat and settlement can be allowed but have no data behind them yet and say "not available yet". |
 | 5 | Upfront charge alternatives | Partly | Reservation fee, credit toward minimum, admission, recipient, split: built. The explicit "combination" and per-event table rules are not. |
 | 6 | Two users book the same table | Ready to test (after website #17 and #19 are merged and applied) | Staff walk-in and desk always locked the table type. The online checkout now does too (#17, race-tested). A payment that lands after its 10-minute hold is flagged for the manager and gets no confirmation (#19 + the vendor screen). Not run against a real database or a phone. |
 | 7 | Prepaid order scanned | Ready to test | Payment and service kept independent. |
 | 8 | Pay-at-venue order | Ready to test | Evidence, amount remaining, review state. |
 | 9 | Cash table and handover | Ready to test | |
-| 10 | Bottle with discount and sign | Partly | Discounts built. **Bottle signs: no code at all.** |
+| 10 | Bottle with discount and sign | Ready to test (31 Oct; website #23, vendor #34) | Discounts built. **Bottle signs built 31 Oct:** the club chooses where signs can go (off / every bottle / chosen bottles) and whether a manager approves a server's sign first; the sign is written on the order line, travels with it, and a waiting or declined sign stops the order being prepared or delivered (enforced by the table). |
 | 11 | Partial bottle delivery | Ready to test | |
 | 12 | Duplicate payment callback | Ready to test | Idempotent, tested on the website side. |
 | 13 | Complimentary location link | **Not built** | Free bottle at a table works; the claim link, map and customer claim page do not exist. |
@@ -45,7 +47,7 @@ Written by Claude on the user's "lets audit what all is left for vendor app for 
 | 19 | Overnight event | Ready to test | After-midnight logic, per-venue time zone, business night in reports. |
 | 20 | Chat expires | Ready to test | Hourly purge is scheduled in production, first run confirmed 29 Oct. |
 | 21 | Close with exceptions | Ready to test | Preliminary and final report. |
-| 22 | Role-specific PDFs | Partly | Owner and manager reports exist. No organizer PDF, no automatic e-mail to recipients. |
+| 22 | Role-specific PDFs | Partly | Owner and manager reports exist. **Built 31 Oct:** the organizer's event report with its PDF (their own tickets plus only what each club shares) and the owner's combined PDF. Still missing: the automatic e-mail of the right PDF to configured recipients (guest and report e-mails are not switched on). |
 | 23 | Refund after settlement | Partly | Refunds keep the original record. Settlement (and so a settlement adjustment) is not built. |
 
 ## 3. The 28 feature sections (2 to 29): my reading

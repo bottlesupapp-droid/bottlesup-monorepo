@@ -56,6 +56,27 @@ Who: **You** = your click, account or decision. **Me** = Claude, on your go. **C
 - **Items 21 and 22 DONE** (vendor PR): the manager's Tonight has **Send alert** (a message in the club's staff chat, pinned at the top; 300 characters) and **Assign staff** (opens the bookings where each is given to a server); the four "Not available yet" rows in More (Complimentary bottles, door Promo codes, organizer Settlement and Notifications) are hidden until built (one switch, `showUnbuiltMoreEntries`, brings them back for development).
 - **Item 16, first step DONE:** the bottle sign the guest typed at checkout is now shown on the booking page to the manager and the table's server (website #20 + the vendor card). The fuller design is NOT built.
 
+### Built 31 Oct on "start with the items you can build now" (five items; **nothing merged, applied, deployed or built as an app**)
+All on separate branches off `main`, each with its tests; CI is green on the first six pull requests below at the time of writing (check the last two). Scenario-based completion went from about 72% to about **80%** built; **0% is proven on a phone** (see `docs/VENDOR_APP_100_PERCENT_AUDIT.md`, section 2).
+
+| # | What | Brief § / scenario | Website | Vendor | Database migration |
+|---|---|---|---|---|---|
+| 1 | The owner's combined report: every club for one night side by side, totals only in one currency, PDF | 27, 5 / scenario 1 | [#22](https://github.com/KDR9MGR/bottles-up-website/pull/22) | [#33](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/33) | `20261115100000_owner_night_report` |
+| 2 | Bottle signs: the club chooses where signs go, a server writes the sign on the order, a manager can approve it first (enforced by the table) | 14, 28 / scenario 10 | [#23](https://github.com/KDR9MGR/bottles-up-website/pull/23) | [#34](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/34) | `20261116100000_bottle_signs` |
+| 3 | Your Venue Access (the club shares six things one by one), the organizer's read-only Sales and its PDF | 7, 8 / scenarios 4, 22 | [#24](https://github.com/KDR9MGR/bottles-up-website/pull/24) | [#35](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/35) | `20261117100000_agreement_access` |
+| 4 | Temporary staff: an individual expiring link that needs an e-mailed 6-digit code, and "ask for a new link" on an expired one | 12 / scenario 3 | [#25](https://github.com/KDR9MGR/bottles-up-website/pull/25) | [#36](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/36) | `20261118100000_temporary_staff_links` + the `send-invitation-code` function |
+
+**To put them live (when you say "apply it"; none of it has been done):** merge the website pull requests (any order; they are independent and were checked to apply together on top of `main`), then for each migration run the read-only pre-flight (`supabase/audit/30`, `32`, `34`, `36`, rows 1 to 4 true), apply it with `apply_one.sh`, and run the post-flight (`31`, `33`, `35`, `37`, every row true; compare the fingerprints with a replay). Then deploy the new edge function `send-invitation-code` (it uses the existing `RESEND_API_KEY` and the service role key Supabase gives functions). Then merge the vendor pull requests and build. If GitHub shows a small conflict in `more_entries.dart`, `more_screen.dart` or `test/more/more_test.dart` between vendor #34 and #35, it is only the two lists of More entries: keep both sides (or tell me).
+
+**Decisions made along the way (change any):**
+- **Link length for temporary staff:** the client has not set a default; the app suggests 24 hours and the person inviting chooses 6 hours to 7 days. The existing "Temporary access" switch now creates the secure link, so people invited that way need the code. Ordinary invitations are unchanged.
+- **Table sales:** sharing it with an organizer shares the club's whole table business for that night (bookings are not tied to an event). It is the club's choice, and the screen says so.
+- **Bar sales, operational chat and settlement** can be allowed by the club but show "not available yet": there is no data behind them (no sales source, chat not tied to grants, settlement waits for the client).
+- **Bottle signs** are written on the order line after the bottle is added (a separate call), not as a field inside "Add bottles", so the live add-bottles path is untouched.
+- **Scenario 22 stays partly built:** the PDFs are made and shared from the app; nothing e-mails them automatically (e-mails are not switched on).
+
+**Still not done:** applying/deploying any of it; a real-phone pass; the e-mail delivery of reports; enforcing the chat grant inside the chat functions.
+
 ### Not built, and why (each needs something that is not in my recommendations or touches live production code)
 | # | Item (brief section) | Why it is not done | What I need |
 |---|---|---|---|
