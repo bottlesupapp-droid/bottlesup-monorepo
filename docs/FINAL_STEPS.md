@@ -43,7 +43,7 @@ Who: **You** = your click, account or decision. **Me** = Claude, on your go. **C
 | # | What | Who |
 |---|---|---|
 | 7 | Social login for the vendor app: **vendor #29 MERGED (30 Oct); it builds and installs on your iPhone. 31 Oct: you said the Supabase/console steps are done and sent the iPhone Google client for `com..bottlesUp.ORG` (`49598092873-0ubqrl5j...`); vendor [#31](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/31) adds the Google/Apple buttons to the Create an account page and switches Google on for iPhone (config + Info.plist URL scheme). #31 is MERGED. Vendor [#32](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/32) switches the vendor to the web client you share between both apps (`49598092873-m0ulktdo...`): merge it, then `pod install` and run on the phone. The customer app has NOT been switched to it yet (say so and I will). Check that id is in Supabase's Google provider Client IDs.** Still yours: tell me what the sign-in page shows on the phone; the console steps in `docs/SOCIAL_LOGIN_SETUP.md` (Apple: Sign In with Apple on `com..bottlesUp.ORG` + the bundle id in Supabase's Apple provider; Google: an Android client for `com.bottlesup.vendor` with the upload and Play SHA-1s, an iOS client for `com..bottlesUp.ORG` whose id you send me, and all client ids in Supabase's Google provider). Until those are done the buttons show but signing in fails. Sign-in only: it never creates a business. | You |
-| 8 | Build vendor 1.4.0 (build 10) for iOS and Android from `main` (it has the third batch and #27/#28; merge #32 first if you want the shared Google client); check the `.ipa` holds `PrivacyInfo.xcprivacy`; upload to TestFlight and Play internal testing. | You say "build 1.4.0"; you upload |
+| 8 | **BUILT 1 Nov (your "now build it"), from vendor `main` at `5ed2964`: version 1.4.0, build 10, for iOS and Android, in `apps/bottles-up-vendor/build/releases/1.4.0-build10/` (see section 4). It has everything merged to date: the third batch, #27/#28, the shared Google client, the combined owner report, bottle signs, venue access and sales, temporary staff links.** Upload to TestFlight and Play internal testing, then the phone pass (item 5). | You upload |
 | 9 | Apple may object to the bundle ID `com..bottlesUp.ORG` (double dot); decide before the store listing. Invitation links: serve `/.well-known/assetlinks.json` (Android) and add Associated Domains (iOS). | You |
 | 10 | Test login roles (`supabase/go-live/test_login_roles.sql`) and remove the demo night afterwards (`demo_night_cleanup.sql`). CMS Payouts > Settings (percentage, weekday, wait days). Support e-mail, phone and address on the CMS Content page. | You |
 | 11 | Switch on guest e-mails (`process-outbox` on a 5-minute schedule) once the client has read the wording. Until then walk-in confirmations, refund decisions and VIP invitations stay "Queued, not sent yet". | You / client |
@@ -197,6 +197,20 @@ Deleting an account failed ("Failed to delete account") for anyone who accepted 
 Undo: none needed (the change only lets deletions through). Tell the client: the audit log keeps the e-mail of whoever acted, and accepted invitations keep the invited e-mail address; the privacy policy should say so.
 
 ## 4. Upload the vendor app (the builds are made)
+
+### NEW 1 Nov: vendor 1.4.0 (build 10), built from `main` at `5ed2964` (nothing uploaded, nothing run on a phone)
+
+All three are in `apps/bottles-up-vendor/build/releases/1.4.0-build10/` (git-ignored), point at PRODUCTION (the default), and were made from a clean copy of `main`, not from your working checkout (which has uncommitted CocoaPods edits and is on another branch):
+
+| | File | Checked |
+|---|---|---|
+| iOS (Transporter, then TestFlight) | `BottlesUp Business 1.4.0-10.ipa` (27.8 MB) | `com..bottlesUp.ORG`, 1.4.0 build 10, display name BottlesUp Business, iOS 15.0+, Apple Distribution: ENITILO ENTERPRISE INC. (4T453RG45S), `codesign` verifies, App Store profile (expires 7 Jun 2027, no device list, get-task-allow false), `PrivacyInfo.xcprivacy` inside |
+| Android bundle (Play Console, internal testing) | `vendor-1.4.0-10.aab` (62.3 MB) | `jar verified`, signed by the upload key `CN=BottlesUp Vendor`, SHA-256 `32:CE:D8:0E:...:08:F4` (same as before) |
+| Android APK (install directly) | `vendor-1.4.0-10.apk` (91.4 MB) | `com.bottlesup.vendor`, versionCode 10, versionName 1.4.0, target SDK 36, same upload key, 16 KB aligned |
+
+All three contain the new code (the compiled app has the names of the new database functions and `send-invitation-code`), which is only a presence check, not a test. Things to know: (1) `pubspec.yaml` on `main` still says `1.3.1+9`; I passed the version on the command line (`--build-name=1.4.0 --build-number=10`), so a build made without those flags would be 1.3.1 (9), which the stores may already have: bump the file when you want it to match; (2) Flutter warns the iOS launch image is the default placeholder (it was before too); (3) the Android build printed Kotlin metadata messages from the 2.2.0 standard library and still produced a valid, verified APK; (4) the first thing to try on a phone is in section 3 of the "Built 31 Oct" list: a TEST account, the e-mailed code, signs, venue access.
+
+### Older builds (19 Oct, version 1.3.0 build 8; kept for history)
 
 Built on 19 Oct from the stack head (`bc810e1`, byte-for-byte the code that lands on `main` with #23), version **1.3.0 (build 8)**, pointing at production:
 
