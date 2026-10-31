@@ -83,6 +83,20 @@ All on separate branches off `main`, each with its tests; CI is green on all eig
 
 **Still not done:** applying/deploying any of it; a real-phone pass; the e-mail delivery of reports; enforcing the chat grant inside the chat functions.
 
+### Built 1 Nov on "2" (report e-mails, the deposit combination, and the guest e-mail texts to read): four pull requests, **nothing merged, applied, deployed or built as an app**
+| What | Website | Vendor | Migration / function |
+|---|---|---|---|
+| **E-mail this report** (scenario 22): recipients per kind of report, a log, send again; three buttons in the app and a Report e-mails page in More | [#26](https://github.com/KDR9MGR/bottles-up-website/pull/26) | [#37](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/37) | `20261119100000_report_emails` + new function `send-report-email` |
+| **A deposit can be a combination** (scenario 5): fee + credit toward the minimum + admission, in percents that make 100 | [#27](https://github.com/KDR9MGR/bottles-up-website/pull/27) | [#38](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/38) | `20261120100000_deposit_combination` + redeploy of four functions |
+
+**Guest e-mails (your first pick): read them first.** The four texts are in `docs/GUEST_EMAILS_FOR_REVIEW.md`. They are not sent. Say "switch the guest e-mails on" (and anything to change) and it is a schedule in the database. The 3 old messages in the queue (20 to 22 Oct) are older than 12 hours and would be marked failed, not sent.
+
+**To put the two features live (when you say "apply it"):** merge the website pull requests; pre-flight `38` then apply `20261119100000`, post-flight `39`; deploy `send-report-email`; pre-flight `40` then apply `20261120100000`, post-flight `41`; **then deploy the four functions that carry the shared money code** (`create-table-booking-checkout`, `site-stripe-webhook`, `site-booking-status`, `confirm-bottle-addon`). Merge the vendor pull requests; build. Order matters only for the combination: apply the migration before anyone chooses a combination, deploy the four functions in the same sitting, and nothing changes for anyone until a club actually saves a combination (BottlesUp's credit switch must already agree with it).
+
+**Decisions made (change any):** report e-mails go out only when someone presses the button, not at close of night; each kind of report has its own list of at most ten addresses; a combination's credit share must be above 0 when BottlesUp's credit switch is on and 0 when it is off; a combination's rounding gives the credit and the admission a round-down and the reservation fee the leftover cents.
+
+**Not done:** per-event table rules and organizer pricing (the rest of scenario 5's section), the automatic send at close, door/CMS labels for a combination booking (they read from production-only functions), the guest e-mails (waiting for your read), and everything that needs a phone.
+
 ### Not built, and why (each needs something that is not in my recommendations or touches live production code)
 | # | Item (brief section) | Why it is not done | What I need |
 |---|---|---|---|
