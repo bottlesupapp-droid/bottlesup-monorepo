@@ -22,7 +22,7 @@ Written by Claude on the user's "lets audit what all is left for vendor app for 
 
 **13 ready to test, 7 partly built, 3 not built, 0 passed** (updated 30 Oct evening: scenario 6 moved up because both of its fixes are built, but only once website PRs #17 and #19 are merged and applied).
 
-**UPDATE 31 Oct, after "start with the items you can build now": 17 ready to test, 3 partly built (5, 22, 23), 3 not built (13, 17, 18), 0 passed.** Scenarios 1, 3, 4 and 10 moved up (rows below); scenario 22 gained the organizer PDF and the combined owner PDF but stays partly built (the PDFs are shared from the app; nothing e-mails them automatically). Everything is built and tested with fakes and a scratch database, on pull requests that are NOT merged, applied or deployed.
+**UPDATE 31 Oct, after "start with the items you can build now": 17 ready to test, 3 partly built (5, 22, 23), 3 not built (13, 17, 18), 0 passed.** Scenarios 1, 3, 4 and 10 moved up (rows below); scenario 22 gained the organizer PDF and the combined owner PDF but stays partly built (the PDFs are shared from the app; nothing e-mails them automatically). Everything is built and tested with fakes and a scratch database, on pull requests that are NOT merged. **Later the same day, on "apply it": the four database migrations and the `send-invitation-code` function went LIVE in production (post-flights all true, fingerprints identical to the replay); no app has been built with the new screens, so 0 scenarios are proven on a phone.**
 
 | # | Scenario | Status | Why |
 |---|---|---|---|
