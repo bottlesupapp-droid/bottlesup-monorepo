@@ -97,6 +97,19 @@ All on separate branches off `main`, each with its tests; CI is green on all eig
 
 **Not done:** per-event table rules and organizer pricing (the rest of scenario 5's section), the automatic send at close, door/CMS labels for a combination booking (they read from production-only functions), the guest e-mails (waiting for your read), and everything that needs a phone.
 
+### Built 2 Nov on "hide social logins, fix the layout, then the rest that needs no answer from the client": four pull requests (website #28, vendor #39, #40, #41), **nothing merged, applied, deployed or built as an app**
+| What | Website | Vendor | Migration |
+|---|---|---|---|
+| **Google and Apple sign-in hidden** everywhere in the vendor app (one switch, off); **the floating bar no longer covers pages or the Add buttons** (your four screenshots) | none | [#39](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/39) | none |
+| **Screens look again by themselves** every 20 seconds while in front, and show "Updated 7:15:04 PM" (Tonight, Floor, Orders, My tables, Requests, payment review) | none | [#40](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/40) (stacked on #39: merge #39 first) | none |
+| **Sales source and closing reports** (scenario 18): a club chooses BottlesUp entries or closing report upload (Connected POS is shown as not available), sends a closing report, the owner or a verifier checks it; the night's report carries "Recorded sales" and "Venue-reported sales", never added together | [#28](https://github.com/KDR9MGR/bottles-up-website/pull/28) | [#41](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/41) | `20261121100000_sales_source` |
+
+**To put the sales source live (when you say "apply it"):** merge website #28; pre-flight `42` then apply `20261121100000`, post-flight `43` (no function deploy: it is database only); merge the vendor pull requests; build. Nothing changes for anyone until a club chooses closing report upload, and the app that has the screens is built.
+
+**Decisions made (change any):** a report can be sent for the last 90 days and covers at most 36 hours; "includes what BottlesUp recorded" must be said (yes or no) and when yes the bar and other part is the report's net less BottlesUp's net, never below 0; a report smaller than what BottlesUp recorded is flagged; the owner or a payment verifier checks, never the sender (a verifier reaches the closing reports from their Summary); a final night report shows the sales as they stand now, with the time they were worked out; the bar gets no padding for the bottom bar any more (pages that pad for it were trimmed, pages with an Add button keep room for the button).
+
+**Not done from your "everything left" list (still to build, no client answer needed):** door filters (Tickets, Booth guests, VIP, Invited, Special guests: only tickets exist as data), override with a reason and exit tracking; the complimentary claim link (scenario 13, which touches stock and orders and needs a design pass); event-cancellation queue; inventory (reserved vs issued, packages, most-sold; reads production-only functions); notification preferences; organizer tickets and publishing; per-event table rules; individual tables with stable IDs; a pending-actions list (needs an offline queue).
+
 ### Not built, and why (each needs something that is not in my recommendations or touches live production code)
 | # | Item (brief section) | Why it is not done | What I need |
 |---|---|---|---|

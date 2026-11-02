@@ -22,6 +22,8 @@ Written by Claude on the user's "lets audit what all is left for vendor app for 
 
 **13 ready to test, 7 partly built, 3 not built, 0 passed** (updated 30 Oct evening: scenario 6 moved up because both of its fixes are built, but only once website PRs #17 and #19 are merged and applied).
 
+**UPDATE 2 Nov, after "hide social logins, fix the layout, then the rest": 19 ready to test, 2 partly built (22, 23), 2 not built (13, 17), 0 passed.** Scenario 18 moved up: a club chooses where its sales come from, can send a closing report, and every night report labels "Recorded sales" and "Venue-reported sales" and never adds them (website #28 and vendor #41, NOT merged or applied; Connected POS is shown as not available because no provider is connected). Also on pull requests, not merged: the vendor app's layout fixes and hidden social sign-in (#39) and live refresh with a last-updated line (#40, section 29). Nothing is proven on a phone.
+
 **UPDATE 1 Nov, after "2" (report e-mails and the combination): 18 ready to test, 2 partly built (22, 23), 3 not built (13, 17, 18), 0 passed.** Scenario 5 moved up with the combination; scenario 22 gained sending by e-mail but not the automatic send. **2 Nov: all four pull requests are merged, the two migrations are applied and the functions deployed (the database side is live); the app needs a rebuild to show them. Nothing here is proven on a phone.**
 
 **UPDATE 31 Oct, after "start with the items you can build now": 17 ready to test, 3 partly built (5, 22, 23), 3 not built (13, 17, 18), 0 passed.** Scenarios 1, 3, 4 and 10 moved up (rows below); scenario 22 gained the organizer PDF and the combined owner PDF but stays partly built (the PDFs are shared from the app; nothing e-mails them automatically). Everything is built and tested with fakes and a scratch database, on pull requests that are NOT merged. **Later the same day, on "apply it": the four database migrations and the `send-invitation-code` function went LIVE in production (post-flights all true, fingerprints identical to the replay); no app has been built with the new screens, so 0 scenarios are proven on a phone.**
@@ -45,7 +47,7 @@ Written by Claude on the user's "lets audit what all is left for vendor app for 
 | 15 | Booth guest pass reused | Ready to test | Per-guest passes and group admission with remaining allowance. |
 | 16 | Door cash or card sale | Ready to test | Cash and the club's own card machine; one sale, one admission. No integrated card. |
 | 17 | Private-room conflicts | **Not built** | No private-room concept in the app. |
-| 18 | POS / upload overlap | **Not built** | No sales-source setting at all. |
+| 18 | POS / upload overlap | Ready to test (2 Nov; website #28 and vendor #41, NOT merged or applied) | Sales Tracking: BottlesUp entries or closing report upload; Connected POS is shown as not available. A closing report is the club's own figure, checked by the owner or a verifier (never the sender); the night's report carries "Recorded sales" and "Venue-reported sales" and never adds them; when the report includes BottlesUp's sales, the bar part is the difference (never below 0). |
 | 19 | Overnight event | Ready to test | After-midnight logic, per-venue time zone, business night in reports. |
 | 20 | Chat expires | Ready to test | Hourly purge is scheduled in production, first run confirmed 29 Oct. |
 | 21 | Close with exceptions | Ready to test | Preliminary and final report. |
@@ -54,10 +56,10 @@ Written by Claude on the user's "lets audit what all is left for vendor app for 
 
 ## 3. The 28 feature sections (2 to 29): my reading
 
-**Built 5, partly built 20, not built 3.** "Built" means the section's described flow exists and is tested with fakes, not that it works on a phone.
+**Built 5, partly built 21, not built 2** (2 Nov: section 24 moved from not built to partly built; its Connected POS is waiting for a provider). "Built" means the section's described flow exists and is tested with fakes, not that it works on a phone.
 
 - **Built:** 3 Permissions, 5 Owner dashboard, 11 Bookings and guest details, 13 Server dashboard and check-in, 21 Venue VIP list.
-- **Not built:** 19 Internal promo codes (staff-applied; the limits-based discounts are a different, built mechanism), 24 Sales-source configuration, 25 Organizer share and payout recording (what exists is BottlesUp's payouts to venues, read only).
+- **Not built:** 19 Internal promo codes (staff-applied; the limits-based discounts are a different, built mechanism), 25 Organizer share and payout recording (what exists is BottlesUp's payouts to venues, read only).
 - **Partly built, with what is missing:**
 
 | § | Section | Missing |
@@ -78,6 +80,7 @@ Written by Claude on the user's "lets audit what all is left for vendor app for 
 | 20 | Complimentary bottles | Claim link and customer claim page. |
 | 22 | Inventory | Reserved vs issued (available-to-sell vs physical), packages with components, most-sold by period. |
 | 23 | Chat, security, notifications | Chat and security built. No push, no SMS, no notification preferences; guest e-mails are written but **switched off** (`process-outbox` is not scheduled). |
+| 24 | Sales-source configuration | Connected POS (no provider is connected, so it is shown as not available); importing a POS's sales and de-duplicating them against BottlesUp's (there is no import yet). BottlesUp entries and closing report upload are built (2 Nov, website #28 and a vendor pull request). |
 | 26 | Changes, refunds, exceptions | Event-cancellation payment queue; settlement adjustments. |
 | 27 | Close night and PDFs | Organizer PDF, consolidated multi-venue owner PDF, automatic e-mail of the PDF, a new report version after a later correction (not checked). |
 | 28 | Settings directory | Settings holds the account, the privacy list and Delete my account only: no Notification preferences, PDF recipients, Sales Tracking, Bottle Signs. |
