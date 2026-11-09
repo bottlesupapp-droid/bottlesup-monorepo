@@ -2,6 +2,7 @@
 
 Started 7 Nov 2026 on the user's "we need to redo the UI/UX of the vendor in this concept and tone ... without breaking any existing features and functions".
 Design source: the Figma Make file "BottlesUp Business App" (https://www.figma.com/make/3uNiwVYsaUhbic9tdIWE2z/BottlesUp-Buisness-App). View-only for us.
+Since 8 Nov the same design also exists as a working web demo in the vendor repo, branch `prototype-web`, folder `prototype/` (React/Vite; `src/*.tsx`, `src/index.css`). It has eight roles and far more screens than the Figma pages seen on 7 Nov, so it is the fuller source; it has made-up data and no backend.
 
 ## Decisions (the user's, 7 Nov)
 
@@ -44,6 +45,7 @@ Inter is bundled (`assets/fonts/Inter.ttf`); nothing in the app downloads a font
 | 2 | The owner's five tabs: Overview, Venues, Tonight, Reports, More (hero card, stat tiles, needs-attention list, segmented switchers) | **BUILT 7 Nov** on branch `design/phase2-owner-tabs` (pushed 8 Nov) (off phase 1's `51a231c`). pushed, no pull request yet, not run on a phone. Details below |
 | 3 | The other roles' tabs (manager, organizer, door, server, security, verifier) | **BUILT 7 Nov** on branch `design/phase3-other-roles` (pushed 8 Nov) (`ab3e634`, on phase 2). pushed, no pull request yet, not run on a phone. Details below |
 | 4 | The long tail: the remaining screens (123 screens in all) | **BUILT (first pass) 7 Nov** on branch `design/phase4-long-tail` (pushed 8 Nov) (on phase 3). pushed, no pull request yet, not run on a phone. Details below |
+| 5 | **Sample screens** for what the design has and the app does not (DJ / Artist, Ambassador and Event Lead roles, organizer tools, venue tools, whole-app screens): 20 layouts with made-up data | **BUILT 10 Nov** on local branch `design/phase5-skeletons` (`fc3957f`, on phase 4). NOT pushed, no pull request, not run on a phone. Debug builds only unless built with `--dart-define=BU_PREVIEWS=true`. The list and what each needs: `docs/VENDOR_APP_PENDING.md` |
 
 ### Phase 2: what changed (owner's tabs; the shared parts reach the other roles too)
 
@@ -79,12 +81,17 @@ The Material widgets (Card, ListTile, Chip, AppBar, sheets, dialogs, inputs) wer
 
 Order against open pull requests: phase 1 is built on #39. Forgot-password / reset screens belong to #42 and were NOT touched (they pick up the new fields and buttons through the shared widgets once #42 is merged).
 
-## In the Figma, not in the app (NOT built; each needs a decision)
+## In the design, not in the app: sample screens (phase 5) and the pending list
 
-- A **role chooser** ("How are you working tonight?") marked DEMO MODE. The real app already knows each person's role from their workspace; a chooser would be a demo feature.
-- **Ambassador** and **Event lead** roles. The app's roles are owner, manager, organizer, server, door, security, verifier.
-- A **booking-link QR page**, a **venue setup progress checklist** screen and a **nightly closing report** flow as drawn. (Parts of these may exist in the app in other forms; each would be checked before anything is added.)
-- A **Dark / Light / System** setting (see decision 1).
+On 7 Nov the decision was "restyle only what exists" and the Figma-only parts were listed here, not built. On 10 Nov ("any feature missing add to the pending list and make UI skeleton for now") they were built as **sample screens**: layouts with made-up data that save and send nothing, so the client can see the whole design. The full list, what each needs to become real, and the questions saved for later are in `docs/VENDOR_APP_PENDING.md`. In short:
+
+- **Roles the app does not have**: DJ / Artist, Ambassador, Event Lead (each a small app with its own tabs).
+- **Organizer tools**: overview with a branded banner, analytics, opportunities, public profile, posts and highlights, flyer tool, repeating events and promo codes, messages (inquiries and team).
+- **Owner and manager tools**: what is behind the Overview numbers, a failed payout, a messages centre, a booking's passes / pre-orders / refund, the venue's own events.
+- **Whole app**: settings with Dark / Light / System, the launch screen, invitation / expired / pending states, the role chooser (a demo screen, not meant to be built).
+
+How they work: `lib/features/preview/` (kit in `widgets/pv_kit.dart`, a role frame in `widgets/pv_mini_app.dart`, one list in `preview_catalog.dart`, the gallery at `/preview`). Reached from More ("Sample screens") and the "no business yet" page. **Debug builds only by default**; `--dart-define=BU_PREVIEWS=true` shows them in a release or TestFlight build. The real roles, the routing of real roles and the database are not touched. Tests: `test/preview/` (64; they open every catalog entry, pin the DJ's price maths and the flows that change what is shown). Full suite on the final state: 3583 passed, 0 failed, 32 skipped. 36 deliberate breakages: 34 caught first time, the 2 misses were test gaps (now closed), all 36 caught. Commits on the branch: `2efd8ca`, `fc3957f`.
+- **Changed outside `features/preview/`**: two routes (`/preview`, `/preview/:id`) in `app_router.dart` behind the flag; one rule in `decideWorkspaceRedirect` (`previewsEnabled`, a signed-in person may open the samples whatever workspaces they have); two entry rows (More and the no-workspace page). The More tab's own structure is unchanged (the row is a plain card, so the tests that pin "one grouped card" still hold).
 
 ## Things to know
 

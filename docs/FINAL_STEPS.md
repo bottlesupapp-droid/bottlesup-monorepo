@@ -112,6 +112,13 @@ All on separate branches off `main`, each with its tests; CI is green on all eig
 
 **Not done from your "everything left" list (still to build, no client answer needed):** door filters (Tickets, Booth guests, VIP, Invited, Special guests: only tickets exist as data), override with a reason and exit tracking; the complimentary claim link (scenario 13, which touches stock and orders and needs a design pass); event-cancellation queue; inventory (reserved vs issued, packages, most-sold; reads production-only functions); notification preferences; organizer tickets and publishing; per-event table rules; individual tables with stable IDs; a pending-actions list (needs an offline queue).
 
+### Vendor redesign and sample screens (7 to 10 Nov): phases 1 to 4 PUSHED (8 Nov); phase 5 built on a local branch; NO pull request, nothing merged, no app built, nothing run on a phone
+
+- **Branches in the vendor repo, stacked:** `design/phase1-foundation` (on PR #39) → `design/phase2-owner-tabs` → `design/phase3-other-roles` → `design/phase4-long-tail` (pushed) → `design/phase5-skeletons` (local, 20 sample screens). Tell me to open the pull requests (I would open them in that order, each based on the one before) or to push phase 5.
+- **The design source** is the branch `prototype-web` of the vendor repo (a web demo with eight roles). The list of what the design has and the app does not, what each needs, and **12 questions I saved for you** is `docs/VENDOR_APP_PENDING.md`. Answer them when you like; nothing waits on them.
+- **To see the sample screens on a phone** you need a build made with `--dart-define=BU_PREVIEWS=true` (debug builds have them already): More, last row, "Sample screens". Not built: say when.
+- **Fix your Mac's Dart package cache (needed before ANY app builds or tests here):** `~/.pub-cache` is owned by root and nearly empty (since Nov 9 06:58). In a terminal: `sudo chown -R "$(whoami)" ~/.pub-cache`, then `flutter pub get` in `apps/bottles-up-vendor`, `apps/bottles-up-user` and `packages/shared`.
+
 ### Not built, and why (each needs something that is not in my recommendations or touches live production code)
 | # | Item (brief section) | Why it is not done | What I need |
 |---|---|---|---|
