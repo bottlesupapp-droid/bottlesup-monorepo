@@ -96,6 +96,8 @@ I did not make sample screens for these, because the app has a screen for the th
 - A phone pass of the redesign and the samples (nothing has run on a device).
 - **Your Mac's Dart package cache is broken**: `~/.pub-cache` is owned by root and holds only a README (it was created Nov 9 06:58), so `flutter pub get`, `flutter test` and a build of any app in this monorepo fail with "Permission denied" until it is yours again. Fix, in a terminal: `sudo chown -R "$(whoami)" ~/.pub-cache` and then `flutter pub get` in each app. (I worked around it with a private cache in my scratch folder and changed nothing of yours.)
 
+- **Every tracked file became executable on 9 Nov (08:31 to 08:33).** A recursive `chmod` over the monorepo folder (not from Claude: nothing of mine touches it) changed 644 to 755, so `git status` in the monorepo and in all three app repos lists about 2,700 "modified" files that are only mode changes (content untouched). A careless `git add -A` would commit them. To hide them: `git config core.fileMode false` in each repo (the monorepo, `apps/bottles-up-vendor`, `apps/bottles-up-user`, `apps/bottles-up-website-main`); to undo them, chmod the files back to 644. Say if you want me to do either. (The same hour as the root-owned `~/.pub-cache` above, so possibly one command run with `sudo`.) Claude sessions: stage by name and use `git -c core.fileMode=false add <files>`.
+
 ## 6. Small things found and left alone
 
 - "Recorded just now ago": the payment line adds " ago" to a label that already says "just now" (`waitedLabel` in the table-service code). A wording fix.
