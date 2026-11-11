@@ -8,7 +8,7 @@ Since 8 Nov the same design also exists as a working web demo in the vendor repo
 
 1. **Dark only for now.** The Figma also has a Light theme (tokens below), but about 550 colours are hard-coded white/black inside screens, so light mode needs its own audit. A later step.
 2. **Restyle only what exists.** Every current screen and function keeps working and gets the new look. What the Figma shows that the app lacks is listed below and NOT built.
-3. **Phase by phase, one pull request each. Nothing was pushed until the user said so; on 8 Nov ("commit and push everything pending") the four branches were pushed to the vendor repo. No pull requests are open yet.**
+3. **Phase by phase, one pull request each. Nothing was pushed until the user said so; on 8 Nov ("commit and push everything pending") the four branches were pushed to the vendor repo. **On 11 Nov ("push phase 5 and open the pull requests") phase 5 was pushed and five stacked pull requests were opened: #43 (phase 1, based on #39) to #47 (phase 5). Nothing is merged.**
 
 ## What the design is (read from the prototype's own stylesheet, not estimated)
 
@@ -41,11 +41,11 @@ Inter is bundled (`assets/fonts/Inter.ttf`); nothing in the app downloads a font
 
 | Phase | What | State |
 |---|---|---|
-| 1 | Foundation (tokens, theme, kit, Inter), the shell (top bar, floating bottom bar), sign-in, the shared auth fields and buttons, the workspace list | **BUILT 7 Nov** on branch `design/phase1-foundation` (pushed 8 Nov) (off PR #39's head, so it keeps the "page ends where the bar begins" fix); full suite passes; 103 new tests; 64 deliberate breakages, 63 caught, 1 equivalent. pushed, no pull request yet, not run on a phone |
-| 2 | The owner's five tabs: Overview, Venues, Tonight, Reports, More (hero card, stat tiles, needs-attention list, segmented switchers) | **BUILT 7 Nov** on branch `design/phase2-owner-tabs` (pushed 8 Nov) (off phase 1's `51a231c`). pushed, no pull request yet, not run on a phone. Details below |
-| 3 | The other roles' tabs (manager, organizer, door, server, security, verifier) | **BUILT 7 Nov** on branch `design/phase3-other-roles` (pushed 8 Nov) (`ab3e634`, on phase 2). pushed, no pull request yet, not run on a phone. Details below |
-| 4 | The long tail: the remaining screens (123 screens in all) | **BUILT (first pass) 7 Nov** on branch `design/phase4-long-tail` (pushed 8 Nov) (on phase 3). pushed, no pull request yet, not run on a phone. Details below |
-| 5 | **Sample screens** for what the design has and the app does not (DJ / Artist, Ambassador and Event Lead roles, organizer tools, venue tools, whole-app screens): 20 layouts with made-up data | **BUILT 10 Nov** on local branch `design/phase5-skeletons` (`fc3957f`, on phase 4). NOT pushed, no pull request, not run on a phone. Debug builds only unless built with `--dart-define=BU_PREVIEWS=true`. The list and what each needs: `docs/VENDOR_APP_PENDING.md` |
+| 1 | Foundation (tokens, theme, kit, Inter), the shell (top bar, floating bottom bar), sign-in, the shared auth fields and buttons, the workspace list | **BUILT 7 Nov** on branch `design/phase1-foundation` (pushed 8 Nov) (off PR #39's head, so it keeps the "page ends where the bar begins" fix); full suite passes; 103 new tests; 64 deliberate breakages, 63 caught, 1 equivalent. pushed, **pull request [#43](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/43)** (opened 11 Nov, not merged), not run on a phone |
+| 2 | The owner's five tabs: Overview, Venues, Tonight, Reports, More (hero card, stat tiles, needs-attention list, segmented switchers) | **BUILT 7 Nov** on branch `design/phase2-owner-tabs` (pushed 8 Nov) (off phase 1's `51a231c`). pushed, **pull request [#44](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/44)** (opened 11 Nov, not merged), not run on a phone. Details below |
+| 3 | The other roles' tabs (manager, organizer, door, server, security, verifier) | **BUILT 7 Nov** on branch `design/phase3-other-roles` (pushed 8 Nov) (`ab3e634`, on phase 2). pushed, **pull request [#45](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/45)** (opened 11 Nov, not merged), not run on a phone. Details below |
+| 4 | The long tail: the remaining screens (123 screens in all) | **BUILT (first pass) 7 Nov** on branch `design/phase4-long-tail` (pushed 8 Nov) (on phase 3). pushed, **pull request [#46](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/46)** (opened 11 Nov, not merged), not run on a phone. Details below |
+| 5 | **Sample screens** for what the design has and the app does not (DJ / Artist, Ambassador and Event Lead roles, organizer tools, venue tools, whole-app screens): 20 layouts with made-up data | **BUILT 10 Nov** on branch `design/phase5-skeletons` (`fc3957f`, on phase 4). pushed 11 Nov, **pull request [#47](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/47)** (not merged), not run on a phone. Debug builds only unless built with `--dart-define=BU_PREVIEWS=true`. The list and what each needs: `docs/VENDOR_APP_PENDING.md` |
 
 ### Phase 2: what changed (owner's tabs; the shared parts reach the other roles too)
 
