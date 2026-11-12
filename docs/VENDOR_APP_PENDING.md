@@ -9,10 +9,10 @@ Bundle ID: Android `com.bottlesup.vendor`. Repo: `bottlesupapp-droid/bottles-up-
 ## 0. Where it stands (10 Nov)
 
 - **The design source is in the repo.** Branch `prototype-web` (one commit, 8 Nov, "Add BottlesUp web prototype (React/Vite demo) in /prototype") holds the whole Business-app design as a working web demo: `prototype/src/*.tsx` (about 600 KB), with eight roles. It is a demo with made-up data, so it is a guide to look and behaviour, not a spec. Nothing in it is wired to a backend.
-- **Redesign phases 1 to 4 (the look of every screen that exists): built, tested, PUSHED on 8 Nov; pull requests opened 11 Nov: #43, #44, #45, #46 (none merged).** Branches `design/phase1-foundation` (on PR #39) → `design/phase2-owner-tabs` → `design/phase3-other-roles` → `design/phase4-long-tail`.
+- **Redesign phases 1 to 4 (the look of every screen that exists): built, tested, PUSHED on 8 Nov; pull requests #43 to #46: MERGED into vendor `main` on 12 Nov (see the line below).** Branches `design/phase1-foundation` (on PR #39) → `design/phase2-owner-tabs` → `design/phase3-other-roles` → `design/phase4-long-tail`.
 - **Phase 5 (this list's first part): sample screens for the features the design has and the app does not.** Branch `design/phase5-skeletons` (commits `2efd8ca`, `fc3957f`, on phase 4), **pushed 11 Nov; pull request #47 (based on #46), not merged**. 20 screens, each a layout with made-up data that saves and sends nothing (section 2).
 - **Nothing here has been run on a phone.** The pictures were rendered from tests.
-- Still open from before: pull requests #39, #40, #41, #42 (vendor) are unmerged; see `docs/FINAL_STEPS.md`.
+- **12 Nov, on the user's "merge the vendor pull requests in order": all nine vendor pull requests are MERGED into `main`: #39, #40, #41, #42, then #43 to #47 (merge commits, branches kept). One follow-up is open: [#48](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/48), a one-line colour fix that makes `main`'s CI green again (see HANDOFF, 12 Nov).** The sample screens are in `main` but still debug-only (`BU_PREVIEWS`).
 
 ## 1. How the sample screens work (so nobody mistakes them for features)
 

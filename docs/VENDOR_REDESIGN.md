@@ -8,7 +8,7 @@ Since 8 Nov the same design also exists as a working web demo in the vendor repo
 
 1. **Dark only for now.** The Figma also has a Light theme (tokens below), but about 550 colours are hard-coded white/black inside screens, so light mode needs its own audit. A later step.
 2. **Restyle only what exists.** Every current screen and function keeps working and gets the new look. What the Figma shows that the app lacks is listed below and NOT built.
-3. **Phase by phase, one pull request each. Nothing was pushed until the user said so; on 8 Nov ("commit and push everything pending") the four branches were pushed to the vendor repo. **On 11 Nov ("push phase 5 and open the pull requests") phase 5 was pushed and five stacked pull requests were opened: #43 (phase 1, based on #39) to #47 (phase 5). Nothing is merged.**
+3. **Phase by phase, one pull request each. Nothing was pushed until the user said so; on 8 Nov ("commit and push everything pending") the four branches were pushed to the vendor repo. **On 11 Nov ("push phase 5 and open the pull requests") phase 5 was pushed and five stacked pull requests were opened: #43 (phase 1, based on #39) to #47 (phase 5). Nothing was merged that day.** **12 Nov ("merge the vendor pull requests in order"): #39 to #42 and #43 to #47 are all MERGED into vendor `main`; #45 needed a one-file conflict fixed first (the Summary page's Closing reports button from #41), and #48 fixes one colour line in #42's reset-code screen that the redesign's no-old-hues test caught.**
 
 ## What the design is (read from the prototype's own stylesheet, not estimated)
 
