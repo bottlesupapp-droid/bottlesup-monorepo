@@ -5,7 +5,7 @@ Keep it current: tick a line when it is done and say where. The app's own list i
 
 Bundle IDs: iOS `com.btlup.pop`, Android `com.bottlesup.user`. Apple team `4T453RG45S`. Version on `master`: `2.0.1+3`.
 
-**UI redesign (14 Nov): started, see `docs/USER_REDESIGN.md`.** Phase 1 (tokens, theme, kit, bottom bar, splash and sign-in screens) is built on the local branch `design/phase1-foundation` (not pushed); the booking side, the social side and the long tail are next; 6 questions are saved there.
+**UI redesign (14 Nov): started, see `docs/USER_REDESIGN.md`.** Phases 1 (tokens, theme, kit, bottom bar, splash and sign-in screens) and 2 (the booking side) are built on the local branches `design/phase1-foundation` and `design/phase2-booking` (not pushed); the social side and the long tail are next; 6 questions are saved there.
 
 ## 0. Where it stands (checked against GitHub on 2 Nov; everything else is from the notes)
 
