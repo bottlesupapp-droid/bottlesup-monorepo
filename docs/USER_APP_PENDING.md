@@ -5,7 +5,15 @@ Keep it current: tick a line when it is done and say where. The app's own list i
 
 Bundle IDs: iOS `com.btlup.pop`, Android `com.bottlesup.user`. Apple team `4T453RG45S`. Version on `master`: `2.0.1+3`.
 
-**UI redesign (14 Nov): started, see `docs/USER_REDESIGN.md`.** Phases 1 (tokens, theme, kit, bottom bar, splash and sign-in screens) and 2 (the booking side) are built on the local branches `design/phase1-foundation` and `design/phase2-booking` (not pushed); the social side and the long tail are next; 6 questions are saved there.
+**UI redesign (14 Nov): started, see `docs/USER_REDESIGN.md`.** Phases 1 (tokens, theme, kit, bottom bar, splash and sign-in screens) and 2 (the booking side) are built on the local branches `design/phase1-foundation` and `design/phase2-booking` (not pushed); **Phase 3a (15 Nov, on the user's "apple to apple with the prototype, anything missing as coming soon"): the layout the app really runs (social off) is now the design's five tabs (Home, Explore, Create, Inbox, Profile), built on local branch `design/phase3-prototype-match` (not pushed) and run on the iPhone 17 simulator.** The social side and the long tail are next; 6 questions are saved there.
+
+**What says "Coming soon" in the customer app today (15 Nov): each is a place the prototype has and the app does not build yet. This is the list to build from; nothing in it saves or sends anything.**
+- **Home:** the people in the stories row and real stories; Reels; Notifications (the dot on the bell is decoration); "Posts from the community" (the feed of other people's posts).
+- **Explore:** other cities; Saved (the bookmark); DJs & services and Opportunities (as search kinds); the quick filters (Filters, Tonight, Under $30, Afro house); Recent searches; Sort ("Best match"); the grid/list switch. Not drawn at all: the "Best match" badge, a rating line and the "why this" line on a card (the venue card has its own rating when it has reviews).
+- **Create:** Post, Story, Reel (the sheet lists them; none opens a tool). The social layout's own Create page is a different, real screen that only exists when the social switch is on.
+- **Inbox:** all of it (Messages, Group chats, Requests, Support, compose, search); in the social layout the real Inbox exists but production has no messages tables.
+- **Profile:** Followers; Highlights (Recaps, Members, Toronto, New); the posts grid and its four views (posts, reels, reposts, tagged); share your profile. Not drawn: a bio line, the sun (light/dark) button, the picture in the tab bar.
+- **Decisions this needs from the user (saved, nothing waits):** the Profile tab's picture and a bio need a column (`profiles` has no bio); the light/dark switch waits on question 1 of `docs/USER_REDESIGN.md` (about 100 colours still written inside screens); Tonight and Under $30 could be built for real from the events (no database change) if the user wants them first.
 
 ## 0. Where it stands (checked against GitHub on 2 Nov; everything else is from the notes)
 
