@@ -116,7 +116,7 @@ How they work: `lib/features/preview/` (kit in `widgets/pv_kit.dart`, a role fra
 
 ## Screens behind the classic tabs (15 Nov, on the user's "lets complete vendor app 100%", after the scheduling)
 
-**Branch:** `design/match-prototype` of the vendor repo, now 7 commits past `main` `4b7ce68` (the 3 of the earlier section plus `2a236fa`, `fd50145`, `b8efba7`, `c68af2f`); **local only, not pushed, no pull request, nothing built or uploaded.** The user's iPhone 17 simulator runs a debug build of it (hot reload; `flutter run` from the scratch worktree), signed in with the classic account.
+**Branch:** `design/match-prototype` of the vendor repo. **16 Nov: pushed as four stacked pull requests, #49 (`design/classic-tabs-match`), #50 (`design/behind-tabs-pages`), #51 (`design/account-pages-and-event-details`) and #52 (`design/match-prototype`); not merged, nothing built or uploaded.** (Written 15 Nov as: 7 commits past `main` `4b7ce68`, local only.) The user's iPhone 17 simulator runs a debug build of it (hot reload; `flutter run` from the scratch worktree), signed in with the classic account.
 
 **What changed (seen on the simulator with the account's real data, and in test pictures):**
 - **One header for every page opened from a tab** (`BuDetailHeader`, `BuDetailAppBar` in `bu_kit.dart`): the design's rounded back button, a small orange eyebrow and the title, actions at the right. It replaced the old `AppBar` on **22 screens**: venue page, edit venue, create venue, create / edit event, event details, tiers, lineup, tables, guest list, scheduled releases, bookings, inventory, edit profile, business details, security, notifications, settings, help, contact, terms, privacy, about. The back button hides when there is nowhere to go back to.
