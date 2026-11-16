@@ -16,6 +16,15 @@ Bundle ID: Android `com.bottlesup.vendor`. Repo: `bottlesupapp-droid/bottles-up-
 - **15 Nov: the classic screens (an account with no workspace, which is what the user's simulator account is) were rebuilt to match the prototype** on the local branch `design/match-prototype` (not pushed): top bar, five tabs (Overview, Venues, Tonight, Reports, More; Events under More), Overview, Venues, More, Reports and Events headings, and a Coming soon page for Tonight. Details and what is not done: `docs/VENDOR_REDESIGN.md`, section "Classic screens in the prototype's look". **Coming soon (designed, not built): Tonight, Team, VIP clients, Payments, Agreements, Broadcast, Messages.** Found and fixed on the way: Reports could not load for any account (the database has no foreign key between inquiries or bookings and events; the app now filters by the account's own event ids).
 - **12 Nov, on the user's "merge the vendor pull requests in order": all nine vendor pull requests are MERGED into `main`: #39, #40, #41, #42, then #43 to #47 (merge commits, branches kept). A one-line colour fix, [#48](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/48), was merged after them (`4b7ce68`) and `main`'s CI is green again (see HANDOFF, 12 Nov).** The sample screens are in `main` but still debug-only (`BU_PREVIEWS`).
 
+## 0b. 16 Nov: four groups of real features built on branches (pull requests open, nothing applied, nothing built)
+
+On the user's "lets get back to vendor app completion" (all four groups). Detail and the user's steps: `docs/FINAL_STEPS.md`, "Built 16 Nov". Pull requests: Door (website #32, vendor #53), Inventory overview (#33, #54), Organizer settlement records (#34, #56), the night in the top bar and the offline banner's last-connected line (vendor #55).
+
+- [x] Door filters (Tickets, VIP real; Booth guests, Invited, Special guests Coming soon), override with a reason (owner, manager), exit tracking with Inside now. **Still to do:** re-entry (needs the client's rule), the three guest kinds' data.
+- [x] Inventory: Available / Reserved / Low stock, most sold by period (read only). **Still to do:** Reserve, Issue and package components (need a decision on what "issue" does to the shelf count; the live delivery functions do not reduce it).
+- [x] Organizer settlement records for the bar share (record only). **Still to do:** tickets and tables in a settlement (needs how that money is split), an adjustment after payment, anything that pays out.
+- [x] The business night in the bar; last-connected line while offline. **Not buildable yet:** notification preferences (no sender), event-cancellation queue (no cancelled status; decision on tickets and tables), a pending-actions list (the app queues nothing).
+
 ## 1. How the sample screens work (so nobody mistakes them for features)
 
 - They live in `lib/features/preview/`. Every screen says "Sample screen: the layout is real, the names and numbers are made up. Nothing here is saved or sent." and every button answers the same.
