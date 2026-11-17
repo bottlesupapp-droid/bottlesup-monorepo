@@ -22,6 +22,8 @@ Written by Claude on the user's "lets audit what all is left for vendor app for 
 
 **13 ready to test, 7 partly built, 3 not built, 0 passed** (updated 30 Oct evening: scenario 6 moved up because both of its fixes are built, but only once website PRs #17 and #19 are merged and applied).
 
+**UPDATE 18 Nov, after "go ahead with scenario 23": 21 ready to test, 1 partly built (22), 1 not built (17), 0 passed.** Scenario 23 moved up: an adjustment after a settlement was paid is built (website #37, vendor #59; record only; the paid settlement is never changed; nothing merged, applied or built). Still partly built: 22. Not built: 17. Nothing is proven on a phone.
+
 **UPDATE 17 Nov, after "start completion of vendor app": 20 ready to test, 2 partly built (22, 23), 1 not built (17), 0 passed.** Scenario 13 moved up: the e-mail that carries the link and the public claim page are built (website #36, vendor #58, stacked on #35 and #57; nothing merged, applied or deployed). Still partly built: 22 (the PDF is made by the app on the phone, so a server-side "send at close" has nothing to attach until a server-side PDF maker exists) and 23 (organizer settlement RECORDS exist, merged and applied 17 Nov; an adjustment after payment does not). Not built: 17 private-room conflicts (the client's rule for which tables conflict is not known). Nothing is proven on a phone.
 
 **UPDATE 2 Nov, after "hide social logins, fix the layout, then the rest": 19 ready to test, 2 partly built (22, 23), 2 not built (13, 17), 0 passed.** Scenario 18 moved up: a club chooses where its sales come from, can send a closing report, and every night report labels "Recorded sales" and "Venue-reported sales" and never adds them (website #28 and vendor #41, NOT merged or applied; Connected POS is shown as not available because no provider is connected). Also on pull requests, not merged: the vendor app's layout fixes and hidden social sign-in (#39) and live refresh with a last-updated line (#40, section 29). Nothing is proven on a phone.
@@ -54,7 +56,7 @@ Written by Claude on the user's "lets audit what all is left for vendor app for 
 | 20 | Chat expires | Ready to test | Hourly purge is scheduled in production, first run confirmed 29 Oct. |
 | 21 | Close with exceptions | Ready to test | Preliminary and final report. |
 | 22 | Role-specific PDFs | Partly (1 Nov: sending built, website #26, vendor #37; merged, applied and deployed 2 Nov; app not rebuilt) | Owner and manager reports exist. **Built 31 Oct:** the organizer's event report with its PDF and the owner's combined PDF. **Built 1 Nov:** E-mail this report on the three reports, with a list of recipients per kind of report, a send log and Send again to the addresses that failed; a club-wide report can never reach the organizer's list. Still missing: sending on its own at close of night (you chose the button, not the schedule), and the guest e-mails, which are separate and still switched off (see `docs/GUEST_EMAILS_FOR_REVIEW.md`). |
-| 23 | Refund after settlement | Partly | Refunds keep the original record. Settlement (and so a settlement adjustment) is not built. |
+| 23 | Refund after settlement | Ready to test (18 Nov; website #37, vendor #59; NOT merged or applied) | Refunds keep the original record. Under a paid settlement the club's owner records a refund, chargeback or correction as a separate signed record (the paid settlement is never changed); both sides see it with its history, what the organizer is owed after it and what is still to settle each way; the owner records the payment that settles it (a recorded external payment) or chooses not to recover it; the organizer can acknowledge or question. Record only: nothing is paid. Not on a phone. Tickets and tables are not part of any settlement (a refund of one creates no adjustment). |
 
 ## 3. The 28 feature sections (2 to 29): my reading
 
@@ -83,7 +85,7 @@ Written by Claude on the user's "lets audit what all is left for vendor app for 
 | 22 | Inventory | Reserved vs issued (available-to-sell vs physical), packages with components, most-sold by period. |
 | 23 | Chat, security, notifications | Chat and security built. No push, no SMS, no notification preferences; guest e-mails are written but **switched off** (`process-outbox` is not scheduled). |
 | 24 | Sales-source configuration | Connected POS (no provider is connected, so it is shown as not available); importing a POS's sales and de-duplicating them against BottlesUp's (there is no import yet). BottlesUp entries and closing report upload are built (2 Nov, website #28 and a vendor pull request). |
-| 26 | Changes, refunds, exceptions | Event-cancellation payment queue; settlement adjustments. |
+| 26 | Changes, refunds, exceptions | Event-cancellation payment queue. (Settlement adjustments built 18 Nov, website #37 and vendor #59.) |
 | 27 | Close night and PDFs | Organizer PDF, consolidated multi-venue owner PDF, automatic e-mail of the PDF, a new report version after a later correction (not checked). |
 | 28 | Settings directory | Settings holds the account, the privacy list and Delete my account only: no Notification preferences, PDF recipients, Sales Tracking, Bottle Signs. |
 | 29 | Shared records and sync | Live updates (none; screens refresh), stored business-night id was not checked. Idempotency and audit are done. |
