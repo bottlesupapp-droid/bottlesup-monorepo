@@ -23,6 +23,7 @@ On the user's "lets get back to vendor app completion" (all four groups). Detail
 - [x] Door filters (Tickets, VIP real; Booth guests, Invited, Special guests Coming soon), override with a reason (owner, manager), exit tracking with Inside now. **Still to do:** re-entry (needs the client's rule), the three guest kinds' data.
 - [x] Inventory: Available / Reserved / Low stock, most sold by period (read only). **Still to do:** Reserve, Issue and package components (need a decision on what "issue" does to the shelf count; the live delivery functions do not reduce it).
 - [x] Organizer settlement records for the bar share (record only). **Still to do:** tickets and tables in a settlement (needs how that money is split), an adjustment after payment, anything that pays out.
+- [x] **17 Nov, the other half of scenario 13 (complimentary claim link):** E-mail the link from an offer, the send log, and the public claim page `/claim/:token` with the club's floor plan (website #36, vendor #58, stacked on #35 and #57, nothing merged, applied or deployed). **Still to do:** SMS (no provider), and a look at the page in a browser.
 - [x] The business night in the bar; last-connected line while offline. **Not buildable yet:** notification preferences (no sender), event-cancellation queue (no cancelled status; decision on tickets and tables), a pending-actions list (the app queues nothing).
 
 ## 1. How the sample screens work (so nobody mistakes them for features)
