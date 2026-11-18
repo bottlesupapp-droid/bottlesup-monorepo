@@ -177,7 +177,7 @@ All on separate branches off `main`, each with its tests; CI is green on all eig
 
 **Not done / limits:** not run on a phone; the organizer is not told (nothing sends push, text or e-mail yet): they see the line in their list and the section; **tickets and tables are still not part of any settlement** (the client has not said how that money is split), so a refund of a ticket or table booking creates no adjustment; the older `settlement_adjust` still says "adjustments after payment are not recorded yet" if called directly on a paid settlement (the app never offers it). The vendor commit message says 111 new tests: the count is 108.
 
-### Built 18 Nov (later), on your "complete it": scenario 22, the reports e-mailed on their own when a night is closed. **Pull requests open, NOTHING merged, applied, deployed, scheduled or built.**
+### Built 18 Nov (later), on your "complete it": scenario 22, the reports e-mailed on their own when a night is closed. **18 Nov 21:49 UTC, on your "done merging 38, 60 and 61": MERGED (website #38 `44b6bf8`, vendor #61 `c7a6d09`, vendor #60 `77137ea`, which also brings the complimentary E-mail-the-link screen into main). Still NOT applied, deployed, scheduled or built.**
 
 | What | Website | Vendor | Migration / audits |
 |---|---|---|---|
@@ -186,7 +186,7 @@ All on separate branches off `main`, each with its tests; CI is green on all eig
 **What you will see (after the steps below and an app rebuild):** More → Report e-mails: under every recipient list (a club's closing report, the owner's combined report, an organizer's event report) a switch, **Send automatically when the night is closed**. It is **off** everywhere until someone switches it on. Switching on asks first; switching off does not. Under the switch: who switched it on and when, and the last automatic send (sent, waiting to try again, or not sent and why).
 
 **Your steps, in order (each is yours to say; I did none):**
-1. Merge website #38 (CI: read it first, one time-zone test was fixed after the first run) and vendor #61.
+1. ~~Merge website #38 and vendor #61~~ DONE 18 Nov (with #60).
 2. **"apply it"**: pre-flight `57` (all true), apply `20261126100000_auto_report_jobs` with `supabase/go-live/apply_one.sh`, post-flight `58`. Until then the app's switch shows an error.
 3. **Deploy** the function `run-report-jobs` (it needs `RESEND_API_KEY`, which the other e-mails already use).
 4. **Schedule** it: run `supabase/go-live/schedule_report_jobs.sql` as the postgres role (every 5 minutes). It reads the Vault secret `service_role_key`; if the social jobs are already scheduled that secret exists. Until step 3 and 4 are done a switched-on list queues its reports and nothing is sent.
