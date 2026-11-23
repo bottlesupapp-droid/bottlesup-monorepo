@@ -27,6 +27,14 @@ On the user's "lets get back to vendor app completion" (all four groups). Detail
 - [x] **18 Nov, scenario 23 (refund after settlement):** under a paid settlement, the refunds, chargebacks and corrections that came after are recorded as separate signed records with history; the owner records the payment that settles one or chooses not to recover it; the organizer can acknowledge or question (website #37, vendor #59; record only, nothing merged, applied or built). **Still to do:** tell the organizer (nothing sends push, text or e-mail yet); tickets and tables in a settlement.
 - [x] The business night in the bar; last-connected line while offline. **Not buildable yet:** notification preferences (no sender), event-cancellation queue (no cancelled status; decision on tickets and tables), a pending-actions list (the app queues nothing).
 
+## 0c. 22-23 Nov: the developer fix list (docs/FINAL_STEPS.md has the table, the order of steps and the choices I made)
+
+- [x] **One-tap navigation** (vendor [#62](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/62), MERGED 23 Nov): a page opens once however many times it was tapped; rows and cards one tap per 350 ms; slide 280 ms.
+- [x] **The router no longer bounces the person to the start** when the session or the workspace list refreshes (vendor [#63](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/63), CI green, not merged).
+- [x] **Business name in Settings** (website [#39](https://github.com/KDR9MGR/bottles-up-website/pull/39) + vendor [#64](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/64), not merged, migration not applied): owner or event organizer only, two-step confirmation, once per 30 days, upcoming events follow.
+- [x] **Tickets from the app** (website [#40](https://github.com/KDR9MGR/bottles-up-website/pull/40) migration + [#41](https://github.com/KDR9MGR/bottles-up-website/pull/41) checkout and pages, customer [#6](https://github.com/bottlesupapp-droid/bottles-up-user/pull/6), vendor [#65](https://github.com/bottlesupapp-droid/bottles-up-vendor/pull/65); not merged, migration not applied, function not deployed): the organizer adds, changes and removes ticket types on each event card (name, price, quantity, optional sale dates). **Still to do:** sale dates in the BottlesUp CMS, access codes and non-transferable flags for organizers, venue owners making tickets (not allowed today), tickets in a settlement.
+- [ ] **Direct deposit setup** (item 2): waits on the Stripe Connect decision. [ ] **App icons** (items 5 and 6): wait on the artwork.
+
 ## 1. How the sample screens work (so nobody mistakes them for features)
 
 - They live in `lib/features/preview/`. Every screen says "Sample screen: the layout is real, the names and numbers are made up. Nothing here is saved or sent." and every button answers the same.
